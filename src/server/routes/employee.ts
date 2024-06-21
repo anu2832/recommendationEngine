@@ -27,7 +27,6 @@ export const handleEmployeeEvents = (socket: Socket) => {
 			const [results] = await connection.execute(
 				'SELECT * FROM feedBack'
 			);
-            console.log("234567890")
 			connection.release();
 
 			socket.emit('view_feedbacks_response', { success: true, menu: results, useId: 12 });
@@ -69,9 +68,11 @@ export const handleEmployeeEvents = (socket: Socket) => {
                 'SELECT userId FROM votedUsers WHERE userId = ?',
                 [userId]
             );
+            console.log(userVotes);
             if (userVotes.length > 0) {
                 socket.emit('vote_for_menu_response', {
                     success: false,
+                    userId: userId,
                     message: 'You have already voted for an item.',
                 });
                 await connection.rollback();
@@ -111,9 +112,16 @@ export const handleEmployeeEvents = (socket: Socket) => {
             );
             const menuItem = rows[0];
             console.log(menuItem);
+            console.log(menuItem.itemId,
+                userId,
+                menuItem.itemName,
+                message,
+                "15",
+                rating,
+                menuItem.MealType,)
             await connection.execute(
 
-                'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating,) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 [
         
                     menuItem.itemId,

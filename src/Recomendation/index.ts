@@ -4,6 +4,7 @@ import { DatabaseService } from './dbService';
 import { FoodService } from './rollOutService';
 import { FoodSentimentCalculator } from './sentimentCalculation';
 
+//getting top food items based on sentiment analysis
 export async function getTopFoodItems(menuType: string): Promise<any[]> {
 	const dbService = new DatabaseService();
 	const sentimentAnalyzer = new SentimentAnalyzer();

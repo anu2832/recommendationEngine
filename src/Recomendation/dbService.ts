@@ -28,6 +28,7 @@ export class DatabaseService {
 	async clearRolloutTable(): Promise<void> {
 		const connection = await pool.getConnection();
 		await connection.execute('DELETE FROM rollover');
+		await connection.execute('DELETE FROM votedUsers');
 		connection.release();
 	}
 

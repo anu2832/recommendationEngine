@@ -59,10 +59,8 @@ export const handleAuthEvents = (socket: Socket) => {
 
     // Event: User logout
     socket.on('logout', () => {
-        console.log("socket");
         const userId = Array.from(userSockets.entries()).find(([_, sock]) => sock === socket)?.[0];
         if (userId) {
-            console.log('inside')
             logInUserActivity(userId, "logout");
             console.log(`User logged out: ${userId}`);
             userSockets.delete(userId);

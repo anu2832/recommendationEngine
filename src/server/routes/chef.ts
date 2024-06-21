@@ -28,6 +28,11 @@ export const handleChefEvents = (socket: Socket) => {
 		try {
 			const top5FoodItems = await getTopFoodItems(data.menuType);
             await addNotification('New item added: ' + data.name);
+            socket.emit('create_rollout_response', {
+                success: true,
+                message: 'Rolled out menu',
+                rolledOutMenu: top5FoodItems,
+            });
 		} catch (error) {
 			console.error('Error fetching top 5 food items:', error);
 		}
@@ -39,7 +44,6 @@ export const handleChefEvents = (socket: Socket) => {
             const [maxVoteItem] = await connection.execute<RowDataPacket[]>(
                 'SELECT * FROM rollover ORDER BY vote DESC LIMIT 1'
             );
-            console.log("")
             if (maxVoteItem.length > 0) {
                 const { itemId, itemName } = maxVoteItem[0];
                 const currentDate = new Date().toISOString().slice(0, 10);

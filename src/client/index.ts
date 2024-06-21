@@ -85,6 +85,18 @@ socket.on('register_response', (data: { success: boolean; message: string; role?
    displayUserPortal();
 });
 
+socket.on('create_rollout_response', (data: { success: boolean; message: string; rolledOutMenu: any }) => {
+    if (data.success) {
+        if (data.rolledOutMenu) {
+            console.log(data.message);
+            console.table(data.rolledOutMenu);
+        }
+    } else {
+        console.log('Failed to rollout: ' + data.message);
+    }
+    chefMenu();
+ });
+
 socket.on('show_rollover_response', (data: { success: boolean; message: string; userId?: string }) => {
    console.log('inside')
    if (data.success) {
@@ -292,7 +304,6 @@ async function seeMenu() {
 }
 
 socket.on('view_menu_response', (data) => {
-    console.log("3333333");
    if (data.success) {
        console.log('Menu Items:');
        data.menu.forEach((item: { itemId: any; itemName: any; price: any; availability: any; mealType: any; }) => {
@@ -337,6 +348,16 @@ socket.on('view_feedbacks_response', (data) => {
     } else {
         console.error('Rollout data retrieval failed:', data);
     }
+});
+
+socket.on('vote_for_menu_response', (data: { success: boolean; message: any, userId: string }) => {
+    if (data.success) {
+        console.log(data.message);
+
+    } else {
+        console.error(data.message);
+    }
+    employeeMenu(data.userId);
 });
 
 async function vote(userId: string) {

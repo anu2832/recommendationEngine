@@ -27,9 +27,10 @@ export const handleEmployeeEvents = (socket: Socket) => {
 			const [results] = await connection.execute(
 				'SELECT * FROM feedBack'
 			);
+            console.log("123456");
 			connection.release();
 
-			socket.emit('view_feedbacks_response', { success: true, menu: results, useId: 12 });
+			socket.emit('view_feedbacks_response', { success: true, menu: results});
 
 		} catch (err) {
 			socket.emit('view_feedbacks_response', { success: false, message: 'Database error' });
@@ -102,8 +103,8 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
-    socket.on('give_feedBack', async ({ itemId, message, userId, rating }) => {
-        console.log(itemId, message, userId, rating);
+    socket.on('give_feedBack', async ({ itemId, userId, item, message, createdTime, mealType, rating }) => {
+        console.log(itemId, userId, item, message, createdTime, mealType, rating);
         try {
             const connection = await pool.getConnection();
             const [rows] = await connection.execute<RowDataPacket[]>(
@@ -118,7 +119,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
                 message,
                 "15",
                 rating,
-                menuItem.MealType,)
+                mealType)
             await connection.execute(
 
                 'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating) VALUES (?, ?, ?, ?, ?, ?, ?)',

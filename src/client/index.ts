@@ -326,9 +326,10 @@ socket.on('viewNotification_response', data => {
     }
 })
 socket.on('view_feedbacks_response', (data) => {
+    console.log(data);
    if (data.success) {
        console.log('FeedBacks:');
-       data.menu.forEach((item: {itemId: any; message: any; item: any; createdTime: any }) => {
+       data.menu.forEach((item: {itemId: any;userId: any; item: any; message: any; createdTime: any; mealType: any; rating: any }) => {
            console.log(`ID: ${item.itemId}, Name: ${item.item}, Feedback: ${item.message}, Time: ${item.createdTime}`);
        });
    } else {
@@ -432,12 +433,13 @@ async function giveFeedbackInput(userId: string) {
     const id = await question('Item id ');
     const feedback = await question('Item feedback ');
     const rating = await question('Item rating ');
-
+    const mealType = await question('Which type of meal - ');
     socket.emit('give_feedBack', {
         itemId: id,
         message: feedback,
         userId: userId,
         rating: rating,
+        mealType: mealType
     });
 }
 

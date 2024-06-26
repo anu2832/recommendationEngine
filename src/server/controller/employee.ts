@@ -1,54 +1,65 @@
 import { Socket } from 'socket.io';
 import { RowDataPacket } from 'mysql2/promise';
-import { pool } from '../../Db/db';
+import { pool } from '../../db/db';
 
 export const handleEmployeeEvents = (socket: Socket) => {
-    
     // Handle 'view_menu' event to fetch and send the menu items to the client.
     socket.on('view_menu', async () => {
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
-                'SELECT * FROM menuitem'
+                'SELECT * FROM menuitem',
             );
             connection.release();
- 
+
             socket.emit('view_menu_response', { success: true, menu: results });
         } catch (err) {
-            socket.emit('view_menu_response', { success: false, message: 'Database error' });
+            socket.emit('view_menu_response', {
+                success: false,
+                message: 'Database error',
+            });
             console.error('Database query error', err);
         }
     });
-    
+
     /// Handle 'view_feedbacks' event to fetch and send feedbacks to the client.
     socket.on('view_feedbacks', async () => {
-		try {
-			const connection = await pool.getConnection();
-			const [results] = await connection.execute(
-				'SELECT * FROM feedBack'
-			);
-            console.log("123456");
-			connection.release();
+        try {
+            const connection = await pool.getConnection();
+            const [results] = await connection.execute(
+                'SELECT * FROM feedBack',
+            );
+            console.log('123456');
+            connection.release();
 
-			socket.emit('view_feedbacks_response', { success: true, menu: results});
+            socket.emit('view_feedbacks_response', {
+                success: true,
+                menu: results,
+            });
+        } catch (err) {
+            socket.emit('view_feedbacks_response', {
+                success: false,
+                message: 'Database error',
+            });
+            console.error('Database query error', err);
+        }
+    });
 
-		} catch (err) {
-			socket.emit('view_feedbacks_response', { success: false, message: 'Database error' });
-			console.error('Database query error', err);
-		}
-	});
-
-     // Handle 'rolloutMenu' event to fetch and send the rolled-out menu items to the client.
-    socket.on('rolloutMenu', async (data) => {
-        console.log("menu rolled");
+    // Handle 'rolloutMenu' event to fetch and send the rolled-out menu items to the client.
+    socket.on('rolloutMenu', async data => {
+        console.log('menu rolled');
         const { userId } = data;
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
-                'SELECT * FROM rollover'
+                'SELECT * FROM rollover',
             );
             connection.release();
-            socket.emit('view_rolledOut_Menu', { success: true, rollout: results, userId: userId});
+            socket.emit('view_rolledOut_Menu', {
+                success: true,
+                rollout: results,
+                userId: userId,
+            });
             console.log(results);
         } catch (err) {
             socket.emit('view_rolledOut_Menu', {
@@ -59,7 +70,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
-     // Handle 'voteForMenu' event to fetch and send the rolled-out menu items to the client.
+    // Handle 'voteForMenu' event to fetch and send the rolled-out menu items to the client.
     socket.on('vote_for_menu', async data => {
         const { userId, itemId } = data;
         try {
@@ -67,7 +78,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
             await connection.beginTransaction();
             const [userVotes] = await connection.execute<RowDataPacket[]>(
                 'SELECT userId FROM votedUsers WHERE userId = ?',
-                [userId]
+                [userId],
             );
             console.log(userVotes);
             if (userVotes.length > 0) {
@@ -82,11 +93,11 @@ export const handleEmployeeEvents = (socket: Socket) => {
             }
             await connection.execute(
                 'UPDATE rollover SET vote = vote + 1 WHERE itemId = ?',
-                [itemId]
+                [itemId],
             );
             await connection.execute(
                 'INSERT INTO votedUsers (userId, itemId) VALUES (?, ?)',
-                [userId, itemId]
+                [userId, itemId],
             );
             await connection.commit();
             connection.release();
@@ -124,7 +135,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
 
     //             'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating) VALUES (?, ?, ?, ?, ?, ?, ?)',
     //             [
-        
+
     //                 menuItem.itemId,
     //                 userId,
     //                 menuItem.itemName,
@@ -146,29 +157,20 @@ export const handleEmployeeEvents = (socket: Socket) => {
     //     }
     // });
 
-    socket.on('give_feedBack', async ({ itemId, message, userId, rating,mealType }) => {
-        console.log(itemId, message, userId, rating);
-        try {
-            const connection = await pool.getConnection();
+    socket.on(
+        'give_feedBack',
+        async ({ itemId, message, userId, rating, mealType }) => {
+            console.log(itemId, message, userId, rating);
+            try {
+                const connection = await pool.getConnection();
 
-            const [rows] = await connection.execute<RowDataPacket[]>(
-                'SELECT * FROM menuitem WHERE itemId = ?',
-                [itemId],
-            );
+                const [rows] = await connection.execute<RowDataPacket[]>(
+                    'SELECT * FROM menuitem WHERE itemId = ?',
+                    [itemId],
+                );
 
-            const menuItem = rows[0];
-            console.log(
-                itemId,
-                menuItem.itemId,
-                userId,
-                menuItem.itemName,
-                message,
-                rating,
-                menuItem.mealType);
-
-            await connection.execute(
-                'INSERT INTO feedBack (id, itemId, userName, itemName, message, rating, mealType) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [
+                const menuItem = rows[0];
+                console.log(
                     itemId,
                     menuItem.itemId,
                     userId,
@@ -176,28 +178,43 @@ export const handleEmployeeEvents = (socket: Socket) => {
                     message,
                     rating,
                     menuItem.mealType,
-                ],
-            );
+                );
 
-            connection.release();
+                await connection.execute(
+                    'INSERT INTO feedBack (id, itemId, userName, itemName, message, rating, mealType) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        itemId,
+                        menuItem.itemId,
+                        userId,
+                        menuItem.itemName,
+                        message,
+                        rating,
+                        menuItem.mealType,
+                    ],
+                );
 
-            socket.emit('giveFeedback_response', { success: true, userId: userId });
-        } catch (err) {
-            socket.emit('giveFeedback_response', {
-                success: false,
-                message: 'Database error',
-            });
-            console.error('Database query error', err);
-        }
-    });
-   
+                connection.release();
+
+                socket.emit('giveFeedback_response', {
+                    success: true,
+                    userId: userId,
+                });
+            } catch (err) {
+                socket.emit('giveFeedback_response', {
+                    success: false,
+                    message: 'Database error',
+                });
+                console.error('Database query error', err);
+            }
+        },
+    );
 
     socket.on('finalizedMenu', async data => {
         const { userId } = data;
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
-                'SELECT * FROM finalizedMenu', 
+                'SELECT * FROM finalizedMenu',
             );
             connection.release();
             socket.emit('show_finalList_response', {
@@ -225,7 +242,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
                 success: true,
                 notifications: results,
             });
-            console.log()
+            console.log();
         } catch (err) {
             socket.emit('viewNotification_response', {
                 success: false,
@@ -234,6 +251,4 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
-
-
 };

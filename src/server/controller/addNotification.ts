@@ -1,4 +1,4 @@
-import { pool } from "../../Db/db";
+import { pool } from '../../db/db';
 
 export async function addNotification(message: string) {
     try {
@@ -7,7 +7,7 @@ export async function addNotification(message: string) {
         const connection = await pool.getConnection();
         const [results] = await connection.execute(
             'INSERT INTO notifications (message, expiryTime) VALUES (?, ?)',
-            [message, expiryTime]
+            [message, expiryTime],
         );
         console.log('Notification added:', message);
     } catch (err) {

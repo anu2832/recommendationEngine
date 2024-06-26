@@ -103,48 +103,94 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
-    socket.on('give_feedBack', async ({ itemId, userId, item, message, createdTime, mealType, rating }) => {
-        console.log(itemId, userId, item, message, createdTime, mealType, rating);
+    // socket.on('give_feedBack', async ({ itemId, userId, item, message, createdTime, mealType, rating }) => {
+    //     console.log(itemId, userId, item, message, createdTime, mealType, rating);
+    //     try {
+    //         const connection = await pool.getConnection();
+    //         const [rows] = await connection.execute<RowDataPacket[]>(
+    //             'SELECT * FROM menuitem WHERE itemId = ?',
+    //             [itemId],
+    //         );
+    //         const menuItem = rows[0];
+    //         console.log(menuItem);
+    //         console.log(menuItem.itemId,
+    //             userId,
+    //             menuItem.itemName,
+    //             message,
+    //             "15-06-2024",
+    //             rating,
+    //             mealType)
+    //         await connection.execute(
+
+    //             'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    //             [
+        
+    //                 menuItem.itemId,
+    //                 userId,
+    //                 menuItem.itemName,
+    //                 message,
+    //                 "15",
+    //                 rating,
+    //                 menuItem.MealType,
+    //             ],
+
+    //         );
+    //         connection.release();
+    //         socket.emit('update_item_response', { success: true });
+    //     } catch (err) {
+    //         socket.emit('update_item_response', {
+    //             success: false,
+    //             message: 'Database error',
+    //         });
+    //         console.error('Database query error', err);
+    //     }
+    // });
+
+    socket.on('give_feedBack', async ({ itemId, message, userId, rating,mealType }) => {
+        console.log(itemId, message, userId, rating);
         try {
             const connection = await pool.getConnection();
+
             const [rows] = await connection.execute<RowDataPacket[]>(
                 'SELECT * FROM menuitem WHERE itemId = ?',
                 [itemId],
             );
+
             const menuItem = rows[0];
-            console.log(menuItem);
-            console.log(menuItem.itemId,
+            console.log(
+                itemId,
+                menuItem.itemId,
                 userId,
                 menuItem.itemName,
                 message,
-                "15",
                 rating,
-                mealType)
-            await connection.execute(
+                menuItem.mealType);
 
-                'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            await connection.execute(
+                'INSERT INTO feedBack (id, itemId, userName, itemName, message, rating, mealType) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 [
-        
+                    itemId,
                     menuItem.itemId,
                     userId,
                     menuItem.itemName,
                     message,
-                    "15",
                     rating,
-                    menuItem.MealType,
+                    menuItem.mealType,
                 ],
-
             );
+
             connection.release();
-            socket.emit('update_item_response', { success: true });
+
+            socket.emit('giveFeedback_response', { success: true, userId: userId });
         } catch (err) {
-            socket.emit('update_item_response', {
+            socket.emit('giveFeedback_response', {
                 success: false,
                 message: 'Database error',
             });
             console.error('Database query error', err);
         }
     });
+   
 
     socket.on('finalizedMenu', async data => {
         const { userId } = data;

@@ -52,7 +52,6 @@ function login() {
     });
 }
 
-
 function logOut() {
     console.log('inside')
     socket.emit('logout');
@@ -179,6 +178,25 @@ socket.on('update_item_response', (data) => {
         console.log('Final Menu:');
         console.table(data.finalList);
         providingFeedback(data.userId);
+    } else {
+        console.error(data.message);
+    }
+});
+
+socket.on('giveFeedback_response', data => {
+    if (data.success) {
+        console.log("Feedback submitted successfully");
+        employeeMenu(data.userId);
+    } else {
+        console.error(data.message);
+    }
+});
+
+socket.on('discard_response', data => {
+    if (data.success) {
+        console.log("discart list");
+        console.table(data.lowerItem)
+        chefMenu();
     } else {
         console.error(data.message);
     }
@@ -451,7 +469,8 @@ function chefMenu() {
    console.log('|    1     |       See menu            |');
    console.log('|    2     |       RollOut Menu        |');
    console.log('|    3     |       Finalized Menu      |');
-   console.log('|    4     |       Logout              |');
+   console.log('|    4     |       Discard Item List   |');
+   console.log('|    5     |       Logout              |');
    console.log('---------------------------------------');
 
    rl.question('Choose an option: ', (option) => {
@@ -466,6 +485,9 @@ function chefMenu() {
                 finalizedMenu(); 
                break;
            case '4':
+                discardItemList();
+               break;
+           case '5':
                 logOut();
            default:
                console.log('Invalid option');
@@ -483,6 +505,11 @@ async function menuRollOut() {
 async function finalizedMenu() {
     socket.emit('selectedMenu');
 }
+function discardItemList() {
+
+    socket.emit('discardItemList');
+}
+
 
 socket.on('connect', () => {
     displayUserPortal();

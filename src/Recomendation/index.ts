@@ -5,7 +5,7 @@ import { FoodService } from './rollOutService';
 import { FoodSentimentCalculator } from './sentimentCalculation';
 
 //getting top food items based on sentiment analysis
-export async function getTopFoodItems(menuType: string): Promise<any[]> {
+export async function getTopFoodItems(menuType?: string): Promise<any[]> {
 	const dbService = new DatabaseService();
 	const sentimentAnalyzer = new SentimentAnalyzer();
 	const foodService = new FoodService(dbService);
@@ -18,10 +18,12 @@ export async function getTopFoodItems(menuType: string): Promise<any[]> {
 
 	await foodService.clearRolloutTable();
 
+	if(menuType){
 	for (const foodItem of top5FoodItems) {
 		const foodDetails = await foodService.fetchFoodDetails(foodItem.foodId);
 		await foodService.insertIntoRollout(foodDetails.itemId, foodDetails.itemName, foodDetails.price, menuType);
 	}
+   }
 
 	return top5FoodItems;
 }

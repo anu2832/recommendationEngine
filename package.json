@@ -17,6 +17,7 @@
   "dependencies": {
     "@types/socket.io": "^3.0.2",
     "express": "^4.19.2",
+    "i": "^0.3.7",
     "mysql2": "^3.10.1",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5"

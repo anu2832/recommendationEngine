@@ -14,15 +14,22 @@ export class DatabaseService {
 		return results;
 	}
 
-	async fetchAllFoodIds(menuType: string): Promise<string[]> {
+	async fetchAllFoodIds(menuType?: string): Promise<string[]> {
 		console.log(menuType)
+		let results;
 		const connection = await pool.getConnection();
-		const [results] = await connection.execute<RowDataPacket[]>(
-			'SELECT DISTINCT itemId FROM feedback WHERE mealType = ?',
-			[menuType]
-		);
+		 if (menuType) {
+            [results] = await connection.execute<RowDataPacket[]>(
+                'SELECT DISTINCT itemId FROM feedback WHERE mealType = ?',
+                [menuType],
+            );
+        } else {
+            [results] = await connection.execute<RowDataPacket[]>(
+                'SELECT DISTINCT itemId FROM feedback',
+            );
+        }
 		connection.release();
-		return results.map((row: any) => row.itemId);
+		return results.map((row:any)=>row.itemId);
 	}
 
 	async clearRolloutTable(): Promise<void> {

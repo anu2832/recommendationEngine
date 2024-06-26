@@ -61,4 +61,67 @@ export const handleChefEvents = (socket: Socket) => {
             console.error('Error finalizing menu:', error);
         }
     }); 
+    socket.on('discardItemList', async data => {
+        try {
+            const canProceed = await canPerformOperation();
+            const lowerItem: any = await getTopFoodItems();
+            console.log(lowerItem);
+            if (!canProceed) {
+                console.log('You can only generate a discard list once a month.');
+                return;
+            }
+            const dateTime = new Date()
+                .toISOString()
+                .slice(0, 19)
+                .replace('T', ' ');
+            await pool.execute(
+                'INSERT INTO discardItemList (discardItemId, itemId, date) VALUES (?, ?, ?)',
+                [0, lowerItem[0].foodId, dateTime]
+            );
+            socket.emit('discard_response', {
+                success: true,
+                message: 'Rolled out menu',
+                lowerItem:lowerItem ,
+            });
+        } catch (error) {
+            console.error('Error fetching top 5 food items:', error);
+        }
+    });
+
+    socket.on('create_rollout', async (data) => {
+		try {
+			const top5FoodItems = await getTopFoodItems(data.menuType);
+            await addNotification('New item added: ' + data.name);
+            socket.emit('create_rollout_response', {
+                success: true,
+                message: 'Rolled out menu',
+                rolledOutMenu: top5FoodItems,
+            });
+		} catch (error) {
+			console.error('Error fetching top 5 food items:', error);
+		}
+	});
 };
+
+
+export async function getLatestDiscardedItem(): Promise<any> {
+    console.log('hiii')
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute<RowDataPacket[]>(
+        'SELECT * FROM discardItemList ORDER BY date DESC LIMIT 1'
+    );
+    return rows.length > 0 ? rows[0] : null;
+}
+
+export async function canPerformOperation(): Promise<boolean> {
+    const lastDiscardedItem = await getLatestDiscardedItem();
+    if (lastDiscardedItem) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const discardedAt = new Date(lastDiscardedItem.discardedAt);
+        if (discardedAt > oneMonthAgo) {
+            return false;
+        }
+    }
+    return true;
+}

@@ -81,11 +81,11 @@ socket.on(
 
 socket.on(
     'register_response',
-    (data: { success: boolean; message: string; role?: string }) => {
+    (data: { success: boolean; message: string; role?: string; userId: string}) => {
         if (data.success) {
             console.log('Registration successful!');
             if (data.role) {
-                // manageRoleActivities(data.role,);
+                 manageRoleActivities(data.role,data.userId);
             }
         } else {
             console.log('Registration failed: ' + data.message);
@@ -266,8 +266,7 @@ function adminMenu() {
     console.log('|  Option  |       Description         |');
     console.log('---------------------------------------');
     console.log('|    1     |       Modify Menu         |');
-    console.log('|    2     |       View Reports        |');
-    console.log('|    3     |         Logout            |');
+    console.log('|    2     |         Logout            |');
     console.log('---------------------------------------');
     rl.question('Choose an option: ', option => {
         switch (option) {
@@ -275,9 +274,6 @@ function adminMenu() {
                 modifyMenu();
                 break;
             case '2':
-                //deleteItem('admin')
-                break;
-            case '3':
                 logOut();
                 break;
             default:
@@ -511,7 +507,7 @@ async function giveFeedbackInput(userId: string) {
     const id = await question('Item id ');
     const feedback = await question('Item feedback ');
     const rating = await question('Item rating ');
-    const mealType = await question('Which type of meal - ');
+    const mealType = await question('Which type of meal -> ');
     socket.emit('give_feedBack', {
         itemId: id,
         message: feedback,

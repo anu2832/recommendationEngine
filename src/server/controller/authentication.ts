@@ -23,7 +23,7 @@ export const handleAuthEvents = (socket: Socket) => {
                     role: user.role,
                     userID: employeeId,
                 });
-                logInUserActivity(employeeId, 'logout');
+                userActivity(employeeId, 'logout');
             } else {
                 socket.emit('auth_response', {
                     success: false,
@@ -75,7 +75,7 @@ export const handleAuthEvents = (socket: Socket) => {
             ([_, sock]) => sock === socket,
         )?.[0];
         if (userId) {
-            logInUserActivity(userId, 'logout');
+            userActivity(userId, 'logout');
             console.log(`User logged out: ${userId}`);
             userSockets.delete(userId);
             rl.close();
@@ -84,7 +84,7 @@ export const handleAuthEvents = (socket: Socket) => {
     });
 
     // Function to log user activity
-    async function logInUserActivity(userId: string, action: string) {
+    async function userActivity(userId: string, action: string) {
         const dateTime = new Date()
             .toISOString()
             .slice(0, 19)

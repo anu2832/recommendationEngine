@@ -11,6 +11,7 @@ export class SentimentAnalyzer {
         'love',
         'like',
         'delicious',
+        'tasty',
     ];
     private negativeWords = [
         'bad',

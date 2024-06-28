@@ -29,7 +29,6 @@ export const handleEmployeeEvents = (socket: Socket) => {
             const [results] = await connection.execute(
                 'SELECT * FROM feedBack',
             );
-            console.log('123456');
             connection.release();
 
             socket.emit('view_feedbacks_response', {

@@ -76,6 +76,7 @@ export const handleChefEvents = (socket: Socket) => {
             console.error('Error finalizing menu:', error);
         }
     });
+
     socket.on('discardItemList', async data => {
         try {
             const canProceed = await canPerformOperation();
@@ -120,15 +121,6 @@ export const handleChefEvents = (socket: Socket) => {
     });
 };
 
-export async function getLatestDiscardedItem(): Promise<any> {
-    console.log('hiii');
-    const connection = await pool.getConnection();
-    const [rows] = await connection.execute<RowDataPacket[]>(
-        'SELECT * FROM discardItemList ORDER BY date DESC LIMIT 1',
-    );
-    return rows.length > 0 ? rows[0] : null;
-}
-
 export async function canPerformOperation(): Promise<boolean> {
     const lastDiscardedItem = await getLatestDiscardedItem();
     if (lastDiscardedItem) {
@@ -140,4 +132,12 @@ export async function canPerformOperation(): Promise<boolean> {
         }
     }
     return true;
+}
+
+export async function getLatestDiscardedItem(): Promise<any> {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute<RowDataPacket[]>(
+        'SELECT * FROM discardItemList ORDER BY date DESC LIMIT 1',
+    );
+    return rows.length > 0 ? rows[0] : null;
 }

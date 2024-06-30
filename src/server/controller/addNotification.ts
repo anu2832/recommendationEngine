@@ -1,4 +1,5 @@
-import { pool } from '../../db/db';
+import { pool } from "../../Db/db";
+
 
 export async function addNotification(message: string) {
     try {

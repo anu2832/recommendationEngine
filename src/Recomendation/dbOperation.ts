@@ -1,5 +1,6 @@
 import mysql, { RowDataPacket } from 'mysql2/promise';
-import { pool } from '../db/db';
+import { pool } from '../Db/db';
+
 
 export class DatabaseService {
     async fetchFeedback(foodId: string): Promise<RowDataPacket[]> {
@@ -13,7 +14,6 @@ export class DatabaseService {
     }
 
     async fetchAllFoodIds(menuType?: string): Promise<string[]> {
-        console.log(menuType);
         let results;
         const connection = await pool.getConnection();
         if (menuType) {
@@ -27,6 +27,7 @@ export class DatabaseService {
             );
         }
         connection.release();
+        //console.log("fetchAllFoods",results);
         return results.map((row: any) => row.itemId);
     }
 
@@ -43,7 +44,6 @@ export class DatabaseService {
         price: string,
         mealType: string,
     ): Promise<void> {
-        console.log(foodId, name, price, mealType);
         const connection = await pool.getConnection();
         await connection.execute(
             'INSERT INTO rollover (itemId, itemName, price, mealTime, vote) VALUES (?, ?, ?, ?, ?)',

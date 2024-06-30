@@ -13,6 +13,7 @@ export class FoodService {
     }
 
     async clearRolloutTable(): Promise<void> {
+        console.log("clearing rollout tbl")
         await this.dbService.clearRolloutTable();
     }
 

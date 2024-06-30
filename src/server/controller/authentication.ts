@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
-import { pool } from '../../db/db';
 import { rl } from '../../utils/rl';
+import { pool } from '../../Db/db';
 const userSockets = new Map<string, Socket>();
 
 // Handle authentication and user registration events.

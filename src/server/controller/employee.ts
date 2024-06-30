@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io';
 import { RowDataPacket } from 'mysql2/promise';
-import { pool } from '../../db/db';
+import { pool } from '../../Db/db';
+
 
 export const handleEmployeeEvents = (socket: Socket) => {
     // Handle 'view_menu' event to fetch and send the menu items to the client.

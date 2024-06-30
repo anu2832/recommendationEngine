@@ -1,8 +1,8 @@
 import { Socket } from 'socket.io';
-import { pool } from '../../db/db';
 import { RowDataPacket } from 'mysql2/promise';
-import { getTopFoodItems } from '../../recomendation';
 import { addNotification } from './addNotification';
+import { pool } from '../../Db/db';
+import { getTopFoodItems } from '../../Recomendation';
 
 // Handle events related to chef actions
 export const handleChefEvents = (socket: Socket) => {
@@ -100,20 +100,6 @@ export const handleChefEvents = (socket: Socket) => {
                 success: true,
                 message: 'Rolled out menu',
                 lowerItem: lowerItem,
-            });
-        } catch (error) {
-            console.error('Error fetching top 5 food items:', error);
-        }
-    });
-
-    socket.on('create_rollout', async data => {
-        try {
-            const top5FoodItems = await getTopFoodItems(data.menuType);
-            await addNotification('New item added: ' + data.name);
-            socket.emit('create_rollout_response', {
-                success: true,
-                message: 'Rolled out menu',
-                rolledOutMenu: top5FoodItems,
             });
         } catch (error) {
             console.error('Error fetching top 5 food items:', error);

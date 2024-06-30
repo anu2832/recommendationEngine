@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io';
-import { pool } from '../../db/db';
 import { MenuItem } from '../../models/menuItem';
 import { addNotification } from './addNotification';
+import { pool } from '../../Db/db';
 
 // Handle admin-specific socket events
 export const handleAdminEvents = (socket: Socket) => {

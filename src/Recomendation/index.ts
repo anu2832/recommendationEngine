@@ -17,8 +17,10 @@ export async function getTopFoodItems(menuType?: string): Promise<any[]> {
         await foodSentimentCalculator.calculateAllFoodSentiments(menuType);
     foodSentiments.sort((a, b) => b.averageRating - a.averageRating);
 
-    const top5FoodItems = foodSentiments.slice(0, 5);
-
+    const top5FoodItems = menuType
+    ? foodSentiments.slice(0, 5)
+    : foodSentiments.slice(-5);
+    console.log(top5FoodItems)
     await foodService.clearRolloutTable();
 
     if (menuType) {
@@ -26,6 +28,7 @@ export async function getTopFoodItems(menuType?: string): Promise<any[]> {
             const foodDetails = await foodService.fetchFoodDetails(
                 foodItem.foodId,
             );
+            //console.log("for loop console",foodItem.foodId)
             await foodService.insertIntoRollout(
                 foodDetails.itemId,
                 foodDetails.itemName,

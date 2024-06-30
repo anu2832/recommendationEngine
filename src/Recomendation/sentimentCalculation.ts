@@ -60,13 +60,11 @@ export class FoodSentimentCalculator {
         menuItem?: string,
     ): Promise<FoodSentiment[]> {
         const foodIds = await this.dbService.fetchAllFoodIds(menuItem);
-        console.log(foodIds, 'foodids');
+        //console.log(foodIds);
         const foodSentiments: FoodSentiment[] = [];
 
         for (const foodId of foodIds) {
-            console.log(foodIds);
             const foodSentiment = await this.getFoodItemSentiment(foodId);
-            console.log(foodSentiment);
             foodSentiments.push(foodSentiment);
         }
 

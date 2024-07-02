@@ -309,27 +309,6 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
-
-    // socket.on('viewNotification', async data => {
-    //     try {
-    //         const connection = await pool.getConnection();
-    //         const [results] = await connection.execute(
-    //             'SELECT * FROM notifications',
-    //         );
-    //         connection.release();
-    //         socket.emit('viewNotification_response', {
-    //             success: true,
-    //             notifications: results,
-    //         });
-    //         console.log();
-    //     } catch (err) {
-    //         socket.emit('viewNotification_response', {
-    //             success: false,
-    //             message: 'Database error',
-    //         });
-    //         console.error('Database query error', err);
-    //     }
-    // });
     
 socket.on('viewNotification', async data => {
         const { userId } = data;

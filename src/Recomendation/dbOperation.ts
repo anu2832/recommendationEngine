@@ -45,9 +45,10 @@ export class DatabaseService {
         mealType: string,
     ): Promise<void> {
         const connection = await pool.getConnection();
+        const currentDate = new Date().toISOString().slice(0, 10);
         await connection.execute(
-            'INSERT INTO rollover (itemId, itemName, price, mealTime, vote) VALUES (?, ?, ?, ?, ?)',
-            [foodId, name, price, mealType, 0],
+            'INSERT INTO rollover (itemId, itemName, price, mealTime, vote, rolloverCreationTime) VALUES (?, ?, ?, ?, ?, ?)',
+            [foodId, name, price, mealType, 0, currentDate],
         );
         connection.release();
     }

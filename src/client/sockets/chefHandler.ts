@@ -118,5 +118,22 @@ socket.on('discard_response', data => {
     }
 });
 
+socket.on('finalizedMenu_response', data => {
+    if (data.success) {
+        console.table(data.message);
+        chefMenu();
+    } else {
+        console.log('Failed to show finalized menu: ' + data.message);
+        chefMenu();
+    }
+});
 
-
+    socket.on('get_recommendation_response', data => {
+        if (data.success) {
+            console.table(data.message);
+            chefMenu();
+        } else {
+            console.log('Failed to show the rolledOver menu: ' + data.message);
+            chefMenu();
+        }
+    });

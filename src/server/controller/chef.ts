@@ -33,43 +33,92 @@ export const handleChefEvents = (socket: Socket) => {
     socket.on('create_rollout', async data => {
         try {
             const connection = await pool.getConnection();
+ 
+            const currentDate = new Date().toISOString().slice(0, 10);
+ 
             const [rolloutResults] = await connection.execute<RowDataPacket[]>(
                 `SELECT r.*,
-                 m.diet_category,
-                 m.spice_level,
-                 m.area,
-                 m.sweet_level
-                FROM rollover r
-                JOIN menuitem m ON r.itemId = m.itemId;`
+                    m.diet_category,
+                    m.spice_level,
+                    m.area,
+                    m.sweet_level,
+                    m.mealType
+             FROM rollover r
+             JOIN menuitem m ON r.itemId = m.itemId
+             WHERE DATE(r.rolloverCreationTime) = ? AND m.mealType = ?`,
+                [currentDate, data.menuType]
             );
-            const top5FoodItems = await getTopFoodItems(data.menuType);
-            await addNotification('New item added: ' + data.name);
+ 
+            if (rolloutResults.length > 0) {
+                console.log(`RollOut menu is already created for ${data.menuType}`);
+                socket.emit('get_recommendation_response', {
+                    success: false,
+                    message: `RollOut menu is already created for ${data.menuType}`,
+                    rolloutMenu: rolloutResults,
+                });
+                return;
+            }
+            else {
+                const top5FoodItems = await getTopFoodItems(data.menuType);
+                await addNotification('New item added: ' + data.itemName);
+            }
+ 
             socket.emit('create_rollout_response', {
                 success: true,
-                message: 'RollOut Menu : ',
+                message: `New RollOut Menu created for  ${data.menuType}`,
                 rolloutMenu: rolloutResults,
             });
         } catch (error) {
             console.error('Error fetching top 5 food items:', error);
+            socket.emit('create_rollout_response', {
+                success: false,
+                message: 'Error fetching top 5 food items.',
+            });
         }
     });
 
     socket.on('selectedMenu', async data => {
+        let connection;
         try {
-            const connection = await pool.getConnection();
+            connection = await pool.getConnection();
+ 
             const [maxVoteItem] = await connection.execute<RowDataPacket[]>(
-                'SELECT * FROM rollover ORDER BY vote DESC LIMIT 1',
+                'SELECT r.*, m.mealType FROM rollover r JOIN menuitem m ON r.itemId = m.itemId ORDER BY r.vote DESC LIMIT 1',
             );
+            console.log(maxVoteItem[0]);
+ 
             if (maxVoteItem.length > 0) {
-                const { itemId, itemName } = maxVoteItem[0];
+                const { itemId, itemName, mealType } = maxVoteItem[0];
                 const currentDate = new Date().toISOString().slice(0, 10);
+ 
+                const [existingFinalMenuItems] = await connection.execute<
+                    RowDataPacket[]
+                >(
+                    'SELECT * FROM finalizedMenu WHERE itemId = ? AND preparedOn = ?',
+                    [itemId, currentDate],
+                );
+ 
+                if (existingFinalMenuItems.length > 0) {
+                    console.log(
+                        `Item has already been added to the final_menu for '${mealType}' for today.`,
+                    );
+                    socket.emit('finalizedMenu_response', {
+                        success: false,
+                        message: `Item has already been added to the final_menu for '${mealType}' for today.`,
+                    });
+                    connection.release();
+                    return;
+                }
+ 
                 await connection.execute(
                     'INSERT INTO finalizedMenu (itemId, itemName, preparedOn) VALUES (?, ?, ?)',
                     [itemId, itemName, currentDate],
                 );
+ 
                 console.log(
                     `Item '${itemName}' with ID '${itemId}' added to final_menu for date '${currentDate}'`,
                 );
+ 
                 await addNotification(
                     'FinalMenu item: ' +
                         itemName +
@@ -78,43 +127,30 @@ export const handleChefEvents = (socket: Socket) => {
                         ' added to final_menu for date ' +
                         currentDate,
                 );
+ 
+                socket.emit('finalizedMenu_response', {
+                    success: true,
+                    message: `Item '${itemName}' with ID '${itemId}' added to final_menu for date '${currentDate}'`,
+                });
             } else {
                 console.log('No items found in rollover table.');
+                socket.emit('finalizedMenu_response', {
+                    success: false,
+                    message: 'No items found in rollover table.',
+                });
             }
+ 
             connection.release();
         } catch (error) {
+            if (connection) connection.release();
+ 
             console.error('Error finalizing menu:', error);
+            socket.emit('finalizedMenu_response', {
+                success: false,
+                message: 'Error finalizing menu.',
+            });
         }
     });
-
-    // socket.on('discardItemList', async data => {
-    //     try {
-    //         const canProceed = await canPerformOperation();
-    //         const lowerItem: any = await getTopFoodItems();
-    //         console.log(lowerItem);
-    //         if (!canProceed) {
-    //             console.log(
-    //                 'You can only generate a discard list once a month.',
-    //             );
-    //             return;
-    //         }
-    //         const dateTime = new Date()
-    //             .toISOString()
-    //             .slice(0, 19)
-    //             .replace('T', ' ');
-    //         await pool.execute(
-    //             'INSERT INTO discardItemList (discardItemId, itemId, date) VALUES (?, ?, ?)',
-    //             [0, lowerItem[0].foodId, dateTime],
-    //         );
-    //         socket.emit('discard_response', {
-    //             success: true,
-    //             message: 'Rolled out menu',
-    //             lowerItem: lowerItem,
-    //         });
-    //     } catch (error) {
-    //         console.error('Error fetching top 5 food items:', error);
-    //     }
-    // });
 
     socket.on('discardItemList', async data => {
         try {

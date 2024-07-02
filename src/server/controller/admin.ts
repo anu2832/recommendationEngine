@@ -5,34 +5,38 @@ import { pool } from '../../Db/db';
 
 // Handle admin-specific socket events
 export const handleAdminEvents = (socket: Socket) => {
+
     socket.on('add_item', async (data: MenuItem) => {
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
-                'INSERT INTO menuitem (itemId, itemName, price,  mealType, availability) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO menuitem (itemId, itemName, price,  mealType, availability, diet_category, spice_level, area, sweet_level ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,)',
                 [
                     data.id,
                     data.name,
                     data.price,
                     data.availability,
                     data.mealTime,
+                    data.diet_category,
+                    data.spice_level,
+                    data.area,
+                    data.sweetDish
                 ],
             );
-            await addNotification('New item added: ' + data.name);
             connection.release();
             socket.emit('add_item_response', {
                 success: true,
                 message: 'Item added successfully',
             });
+            await addNotification('New item added: ' + data.name);
         } catch (err) {
             socket.emit('add_item_response', {
                 success: false,
-                message: 'Database error',
+                message: err,
             });
-            console.error('Database query error', err);
+            console.error('Database query error:-', err);
         }
     });
-
     //Event listener for deleting a menu item
     socket.on('delete_item', async data => {
         const { itemId, role } = data;

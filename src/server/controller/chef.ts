@@ -32,12 +32,22 @@ export const handleChefEvents = (socket: Socket) => {
     // Event: Create a rollout with top food items based on menu type
     socket.on('create_rollout', async data => {
         try {
+            const connection = await pool.getConnection();
+            const [rolloutResults] = await connection.execute<RowDataPacket[]>(
+                `SELECT r.*,
+                 m.diet_category,
+                 m.spice_level,
+                 m.area,
+                 m.sweet_level
+                FROM rollover r
+                JOIN menuitem m ON r.itemId = m.itemId;`
+            );
             const top5FoodItems = await getTopFoodItems(data.menuType);
             await addNotification('New item added: ' + data.name);
             socket.emit('create_rollout_response', {
                 success: true,
-                message: 'Rolled out menu',
-                rolledOutMenu: top5FoodItems,
+                message: 'RollOut Menu : ',
+                rolloutMenu: rolloutResults,
             });
         } catch (error) {
             console.error('Error fetching top 5 food items:', error);

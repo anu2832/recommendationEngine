@@ -78,12 +78,27 @@ async function updateItem(role: string) {
 }
 
 async function addItem(role: string) {
-    const id = await question('Item id ');
+    const id = await question('\nItem id ');
     const name = await question('Enter Name: ');
     const price = await question('Enter price: ');
     const availability = await question('Enter availability: ');
-    const mealTime = await question('Enter mealType: ');
-    socket.emit('add_item', { id, name, price, availability, role, mealTime });
+    const mealTime = await question('Enter mealTime: ');
+    const diet_Category = await question('Enter dietType: ');
+    const spice_level = await question('Enter spiceType: ');
+    const area = await question('Enter region: ');
+    const sweet_level = await question('Enter sweetDish: ');
+    socket.emit('add_item', {
+        id,
+        name,
+        price,
+        availability,
+        role,
+        mealTime,
+        diet_Category,
+        spice_level,
+        area,
+        sweet_level
+    });
 }
 
 async function deleteItem(role: string) {

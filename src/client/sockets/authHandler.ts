@@ -87,7 +87,7 @@ socket.on(
             }
         } else {
             console.log('Registration failed: ' + data.message);
+            displayUserPortal();
         }
-        displayUserPortal();
     },
 );

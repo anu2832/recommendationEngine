@@ -13,7 +13,8 @@ export function employeeMenu(userId: string) {
     console.log('|    3     |       Provide feedback    |');
     console.log('|    4     |       View Feedback       |');
     console.log('|    5     |       View Notification   |');
-    console.log('|    6     |        Logout\n           |');
+    console.log('|    6     |       Create your Profile |');
+    console.log('|    7     |       Logout\n            |');
     console.log('---------------------------------------');
 
     rl.question('Choose an option: ', option => {
@@ -34,6 +35,9 @@ export function employeeMenu(userId: string) {
                 viewNotification();
                 break;
             case '6':
+                makeProfile(userId);
+                break;
+            case '7':
                 logOut();
             default:
                 console.log('Invalid option');
@@ -53,10 +57,32 @@ function voteforMenu(userId: string) {
 function viewNotification() {
     socket.emit('viewNotification');
 }
+
 function displayFinalMenu(userId: string) {
     socket.emit('finalizedMenu', { userId: userId });
-}
+} 
 
+async function makeProfile(userId: string) {
+    const diet_category = await question(
+        'Are you vegetarian, non-vegetarian, or eggetarian?',
+    );
+    const spice_level = await question(
+        'Do you prefer low, medium, or high spice levels?',
+    );
+    const area = await question(
+        'Do you prefer North Indian or South Indian food?',
+    );
+    const sweet_level = await question('Do you like sweet foods?');
+    console.log("userId->",userId)
+    socket.emit('create_profile', {
+        userId,
+        diet_category,
+        spice_level,
+        area,
+        sweet_level,
+    });
+}
+ 
 async function giveFeedbackInput(userId: string) {
     const id = await question('Item id ');
     const feedback = await question('Item feedback ');
@@ -142,5 +168,24 @@ socket.on('view_feedbacks_response', data => {
         );
     } else {
         console.log('Failed to retrieve menu: ' + data.message);
+    }
+});
+socket.on('create_profile_response', data => {
+    if (data.success) {
+        console.log('Your profile is created\n');
+    } else {
+        console.error(data.message);
+    }
+    employeeMenu(data.userId);
+});
+
+socket.on('show_finalList_response', data => {
+    console.log("finalized menu")
+    if (data.success) {
+        console.log("finalized")
+        console.table(data.finalList);
+        giveFeedbackInput(data.userId);
+    } else {
+        console.error(data.message);
     }
 });

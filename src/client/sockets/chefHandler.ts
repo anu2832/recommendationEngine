@@ -7,24 +7,32 @@ export function chefMenu() {
     console.log('---------------------------------------');
     console.log('|  Option  |       Description         |');
     console.log('---------------------------------------');
-    console.log('|    1     |       RollOut Menu        |');
-    console.log('|    2     |       Finalized Menu      |');
-    console.log('|    3     |       Discard Item List   |');
-    console.log('|    4     |       Logout              |');
+    console.log('|    1     |       View Menu           |');
+    console.log('|    2     |       RollOut Menu        |');
+    console.log('|    3     |       Finalize Menu       |');
+    console.log('|    4     |       Discard Item List   |');
+    console.log('|    5     |       See feedback        |');
+    console.log('|    6     |       Logout              |');
     console.log('---------------------------------------');
 
     rl.question('Choose an option: ', option => {
         switch (option) {
             case '1':
-                menuRollOut();
+                viewMenu();
                 break;
             case '2':
-                finalizedMenu();
+                menuRollOut();
                 break;
             case '3':
-                discardItemList();
+                finalizedMenu();
                 break;
             case '4':
+                discardItemList();
+                break;
+            case '5':
+                seeFeedback();
+                break;
+            case '6':
                 logOut();
             default:
                 console.log('Invalid option');
@@ -44,6 +52,12 @@ export async function finalizedMenu() {
 }
 function discardItemList() {
     socket.emit('discardItemList');
+}
+function viewMenu() {
+    socket.emit('see_menu');
+}
+function seeFeedback() {
+    socket.emit('see_feedback');
 }
 socket.on(
     'create_rollout_response',
@@ -73,4 +87,36 @@ async function giveFeedbackInput(userId: string) {
         mealType: mealType,
     });
 }
+
+socket.on('see_menu_response', data => {
+    if (data.success) {
+        console.table(data.menu);
+    } else {
+        console.error(data.message);
+    }
+    chefMenu();
+});
+ 
+socket.on('see_feedback_response', data => {
+    if (data.success) {
+        console.table(data.itemFeedback);
+        chefMenu();
+    } else {
+        console.log('Failed to retrieve feedbacks: ' + data.message);
+        chefMenu();
+    }
+});
+
+socket.on('discard_response', data => {
+    if (data.success) {
+        console.table(data.message);
+        console.log(data.discardItems)
+        chefMenu();
+    } else {
+        console.log('Failed to create Discard List: ' + data.message);
+        chefMenu();
+    }
+});
+
+
 

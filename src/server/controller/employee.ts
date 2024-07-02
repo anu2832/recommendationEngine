@@ -61,7 +61,8 @@ export const handleEmployeeEvents = (socket: Socket) => {
     });
  
     // Handle 'view_menu' event to fetch and send the menu items to the client.
-    socket.on('view_menu', async () => {
+    socket.on('view_menu', async (data) => {
+        const { userId } = data;
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
@@ -69,7 +70,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
             );
             connection.release();
 
-            socket.emit('view_menu_response', { success: true, menu: results });
+            socket.emit('view_menu_response', { success: true, menu: results,userId: userId });
         } catch (err) {
             socket.emit('view_menu_response', {
                 success: false,
@@ -105,7 +106,6 @@ export const handleEmployeeEvents = (socket: Socket) => {
     socket.on('rolloutMenu', async (data) => {
         const { userId } = data;
         let connection;
- 
         try {
             connection = await pool.getConnection();
  
@@ -142,34 +142,34 @@ export const handleEmployeeEvents = (socket: Socket) => {
                 // Custom sorting logic based on user profile
  
                 // Sort by diet preference
-                if (a.dietType === userProfile.dietPreference && b.dietType !== userProfile.dietPreference) {
+                if (a.diet_category === userProfile.diet_category && b.diet_category !== userProfile.diet_category) {
                     return -1;
                 }
-                if (a.dietType !== userProfile.dietPreference && b.dietType === userProfile.dietPreference) {
+                if (a.diet_category !== userProfile.diet_category && b.diet_category === userProfile.diet_category) {
                     return 1;
                 }
  
                 // Sort by spice preference
-                if (a.SpiceLevel === userProfile.spicePreference && b.SpiceLevel !== userProfile.spicePreference) {
+                if (a.spice_level === userProfile.spice_level && b.spice_level !== userProfile.spice_level) {
                     return -1;
                 }
-                if (a.SpiceLevel !== userProfile.spicePreference && b.SpiceLevel === userProfile.spicePreference) {
+                if (a.spice_level !== userProfile.spice_level && b.spice_level === userProfile.spice_level) {
                     return 1;
                 }
  
                 // Sort by region preference
-                if (a.region === userProfile.preferredRegion && b.region !== userProfile.preferredRegion) {
+                if (a.area === userProfile.area && b.area !== userProfile.area) {
                     return -1;
                 }
-                if (a.region !== userProfile.preferredRegion && b.region === userProfile.preferredRegion) {
+                if (a.area !== userProfile.area && b.area === userProfile.area) {
                     return 1;
                 }
  
                 // Sort by sweet dish preference
-                if (a.sweetDish === userProfile.likesSweet && b.sweetDish !== userProfile.likesSweet) {
+                if (a.sweet_level === userProfile.sweet_level && b.sweet_level !== userProfile.sweet_level) {
                     return -1;
                 }
-                if (a.sweetDish !== userProfile.likesSweet && b.sweetDish === userProfile.likesSweet) {
+                if (a.sweet_level !== userProfile.sweet_level && b.sweet_level === userProfile.sweet_level) {
                     return 1;
                 }
  
@@ -179,13 +179,13 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.log(sortedRolloutItems)
             connection.release();
  
-            socket.emit('view_rollout_response', {
+            socket.emit('rollout_response', {
                 success: true,
-                rollout: sortedRolloutItems,
+                rollOutData: sortedRolloutItems,
                 userId,
             });
         } catch (err) {
-            socket.emit('view_rollout_response', {
+            socket.emit('rollout_response', {
                 success: false,
                 message: 'Database error',
             });
@@ -235,49 +235,6 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
-
-    // socket.on('give_feedBack', async ({ itemId, userId, item, message, createdTime, mealType, rating }) => {
-    //     console.log(itemId, userId, item, message, createdTime, mealType, rating);
-    //     try {
-    //         const connection = await pool.getConnection();
-    //         const [rows] = await connection.execute<RowDataPacket[]>(
-    //             'SELECT * FROM menuitem WHERE itemId = ?',
-    //             [itemId],
-    //         );
-    //         const menuItem = rows[0];
-    //         console.log(menuItem);
-    //         console.log(menuItem.itemId,
-    //             userId,
-    //             menuItem.itemName,
-    //             message,
-    //             "15-06-2024",
-    //             rating,
-    //             mealType)
-    //         await connection.execute(
-
-    //             'INSERT INTO feedback (itemId, userId, item, message, createdTime, mealType,rating) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    //             [
-
-    //                 menuItem.itemId,
-    //                 userId,
-    //                 menuItem.itemName,
-    //                 message,
-    //                 "15",
-    //                 rating,
-    //                 menuItem.MealType,
-    //             ],
-
-    //         );
-    //         connection.release();
-    //         socket.emit('update_item_response', { success: true });
-    //     } catch (err) {
-    //         socket.emit('update_item_response', {
-    //             success: false,
-    //             message: 'Database error',
-    //         });
-    //         console.error('Database query error', err);
-    //     }
-    // });
 
     socket.on(
         'give_feedBack',
@@ -339,7 +296,6 @@ export const handleEmployeeEvents = (socket: Socket) => {
                 'SELECT * FROM finalizedMenu',
             );
             connection.release();
-            console.log("1234567898765432");
             socket.emit('show_finalList_response', {
                 success: true,
                 userId: userId,
@@ -354,18 +310,49 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
-    socket.on('viewNotification', async data => {
+    // socket.on('viewNotification', async data => {
+    //     try {
+    //         const connection = await pool.getConnection();
+    //         const [results] = await connection.execute(
+    //             'SELECT * FROM notifications',
+    //         );
+    //         connection.release();
+    //         socket.emit('viewNotification_response', {
+    //             success: true,
+    //             notifications: results,
+    //         });
+    //         console.log();
+    //     } catch (err) {
+    //         socket.emit('viewNotification_response', {
+    //             success: false,
+    //             message: 'Database error',
+    //         });
+    //         console.error('Database query error', err);
+    //     }
+    // });
+    
+socket.on('viewNotification', async data => {
+        const { userId } = data;
+        console.log(userId);
         try {
-            const connection = await pool.getConnection();
-            const [results] = await connection.execute(
-                'SELECT * FROM notifications',
+            const lastNotificationId = await getLastNotificationId(userId);
+            const notifications = await getNotifications(
+                lastNotificationId ?? undefined,
             );
-            connection.release();
+ 
+            const connection = await pool.getConnection();
+            if (notifications.length > 0) {
+                const latestNotificationId = notifications[0].notificationId;
+                console.log(latestNotificationId);
+ 
+                await updateLastNotificationId(userId, latestNotificationId);
+            }
+ 
             socket.emit('viewNotification_response', {
                 success: true,
-                notifications: results,
+                userId: data.userId,
+                notifications: notifications,
             });
-            console.log();
         } catch (err) {
             socket.emit('viewNotification_response', {
                 success: false,
@@ -374,5 +361,70 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
-    
+ 
 };
+
+async function getLastNotificationId(userId: number): Promise<number | null> {
+    const connection = await pool.getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>(
+            'SELECT notificationId FROM userNotificationHistory WHERE userId = ?',
+            [userId],
+        );
+        if (rows.length > 0) {
+            return rows[rows.length - 1].notificationId;
+        } else {
+            return null;
+        }
+    } finally {
+        connection.release();
+    }
+}
+ 
+async function updateLastNotificationId(
+    userId: number,
+    notificationId: number,
+) {
+    const connection = await pool.getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>(
+            'SELECT * FROM userNotificationHistory WHERE userId = ?',
+            [userId],
+        );
+ 
+        if (rows.length > 0) {
+            await connection.execute(
+                'UPDATE userNotificationHistory SET notificationId = ? WHERE userId = ?',
+                [notificationId, userId],
+            );
+        } else {
+            await connection.execute(
+                'INSERT INTO userNotificationHistory (userId, notificationId) VALUES (?, ?)',
+                [userId, notificationId],
+            );
+        }
+    } finally {
+        connection.release();
+    }
+}
+ 
+export async function getNotifications(sinceNotificationId?: number) {
+    const connection = await pool.getConnection();
+    try {
+        if (sinceNotificationId) {
+            const [results] = await connection.execute<RowDataPacket[]>(
+                'SELECT * FROM notifications WHERE notificationId > ? ORDER BY createdAt DESC',
+                [sinceNotificationId],
+            );
+            return results;
+        } else {
+            const [results] = await connection.execute<RowDataPacket[]>(
+                'SELECT * FROM notifications ORDER BY createdAt DESC',
+            );
+            return results;
+        }
+    } finally {
+        connection.release();
+    }
+}
+ 

@@ -20,7 +20,7 @@ export function employeeMenu(userId: string) {
     rl.question('Choose an option: ', option => {
         switch (option) {
             case '1':
-                seeMenu();
+                seeMenu(userId);
                 break;
             case '2':
                 voteforMenu(userId);
@@ -32,7 +32,7 @@ export function employeeMenu(userId: string) {
                 viewFeedbacks();
                 break;
             case '5':
-                viewNotification();
+                viewNotification(userId);
                 break;
             case '6':
                 makeProfile(userId);
@@ -54,8 +54,8 @@ function voteforMenu(userId: string) {
     socket.emit('rolloutMenu', { userId: userId });
 }
 
-function viewNotification() {
-    socket.emit('viewNotification');
+function viewNotification(userId:string) {
+    socket.emit('viewNotification',{ userId: userId });
 }
 
 function displayFinalMenu(userId: string) {
@@ -100,34 +100,25 @@ async function giveFeedbackInput(userId: string) {
 async function providingFeedback(userId: string) {
     displayFinalMenu(userId);
 }
-async function giveFeedback(userId: string) {
-    finalizedMenu();
+
+export async function seeMenu(userId: string) {
+    socket.emit('view_menu',{userId: userId});
 }
-export async function seeMenu() {
-    socket.emit('view_menu');
+
+async function voteForItem(userId: string) {
+    const itemId = await question('Enter Item Id that you want to vote:  ');
+    socket.emit('vote_for_menu', { userId: userId, itemId: itemId });
 }
+
 socket.on('view_menu_response', data => {
     if (data.success) {
-        console.log('Menu Items:');
-        data.menu.forEach(
-            (item: {
-                itemId: any;
-                itemName: any;
-                price: any;
-                availability: any;
-                mealType: any;
-            }) => {
-                console.log(
-                    `ID: ${item.itemId}, Name: ${item.itemName}, Price: ${item.price}, Availability: ${item.availability}, Meal Time: ${item.mealType}`,
-                );
-            },
-        );
+      console.table(data.menu)
     } else {
         console.log('Failed to retrieve menu: ' + data.message);
     }
-    employeeMenu('123');
+    employeeMenu(data.userId);
 });
-
+// Socket event handler
 socket.on('viewNotification_response', data => {
     if (data.success) {
         console.log(' Notification');
@@ -135,10 +126,13 @@ socket.on('viewNotification_response', data => {
     } else {
         console.error(data.message);
     }
+    employeeMenu(data.userID)
 });
+
 socket.on(
     'vote_for_menu_response',
     (data: { success: boolean; message: any; userId: string }) => {
+        console.log("data-->",data)
         if (data.success) {
             console.log(data.message);
         } else {
@@ -147,29 +141,17 @@ socket.on(
         employeeMenu(data.userId);
     },
 );
+
+// Socket event handler
 socket.on('view_feedbacks_response', data => {
     console.log(data);
     if (data.success) {
-        console.log('FeedBacks:');
-        data.menu.forEach(
-            (item: {
-                itemId: any;
-                userId: any;
-                item: any;
-                message: any;
-                createdTime: any;
-                mealType: any;
-                rating: any;
-            }) => {
-                console.log(
-                    `ID: ${item.itemId}, Name: ${item.item}, Feedback: ${item.message}, Time: ${item.createdTime}`,
-                );
-            },
-        );
+        console.table(data.menu)
     } else {
-        console.log('Failed to retrieve menu: ' + data.message);
+        console.log('Failed to retrieve feedbacks: ' + data.message);
     }
 });
+
 socket.on('create_profile_response', data => {
     if (data.success) {
         console.log('Your profile is created\n');
@@ -180,12 +162,27 @@ socket.on('create_profile_response', data => {
 });
 
 socket.on('show_finalList_response', data => {
-    console.log("finalized menu")
+    console.log(" menu")
     if (data.success) {
-        console.log("finalized")
         console.table(data.finalList);
         giveFeedbackInput(data.userId);
     } else {
         console.error(data.message);
     }
 });
+
+socket.on(
+    'rollout_response',
+    (data: { success: boolean; rollOutData: any; userId: string }) => {
+        if (data.success) {
+            console.log('Rollout data retrieval successful!');
+            if (data.rollOutData) {
+                console.log('            Rollout Table Data:            ');
+                console.table(data.rollOutData);
+                voteForItem(data.userId);
+            }
+        } else {
+            console.error('Rollout data retrieval failed:', data);
+        }
+    },
+);

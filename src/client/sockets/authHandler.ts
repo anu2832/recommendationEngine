@@ -10,7 +10,6 @@ export function displayUserPortal() {
     console.log('---------------------------------------');
     console.log('|    1     |           Register        |');
     console.log('|    2     |            Login          |');
-    console.log('|    3     |           Logout          |');
     console.log('---------------------------------------');
 
     rl.question('Choose an option: ', (option: string) => {
@@ -20,9 +19,6 @@ export function displayUserPortal() {
                 break;
             case '2':
                 login();
-                break;
-            case '3':
-                logOut();
                 break;
             default:
                 console.log('\nInvalid option');

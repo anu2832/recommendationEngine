@@ -63,12 +63,10 @@ async function updateItem(role: string) {
 
     socket.once('check_item_exists_response', async response => {
         if (response.success && response.exists) {
-            const newName = await question('Enter new name for the item: ');
-            const newPrice = await question('Enter new price for the item: ');
+            const availability = await question('Enter availability for the item: ');
             socket.emit('update_item', {
                 itemId: id,
-                name: newName,
-                price: newPrice,
+                availability: availability
             });
         } else {
             console.log('Item ID not found.');
@@ -79,14 +77,14 @@ async function updateItem(role: string) {
 
 async function addItem(role: string) {
     const id = await question('\nItem id ');
-    const name = await question('Enter Name: ');
+    const name = await question('Enter name of item: ');
     const price = await question('Enter price: ');
     const availability = await question('Enter availability: ');
-    const mealTime = await question('Enter mealTime: ');
-    const diet_Category = await question('Enter dietType: ');
+    const mealTime = await question('Enter type of meal: ');
+    const diet_category = await question('Enter dietType: ');
     const spice_level = await question('Enter spiceType: ');
-    const area = await question('Enter region: ');
-    const sweet_level = await question('Enter sweetDish: ');
+    const area = await question('Enter the region: ');
+    const sweetDish = await question('Is it sweetDish: ');
     socket.emit('add_item', {
         id,
         name,
@@ -94,10 +92,10 @@ async function addItem(role: string) {
         availability,
         role,
         mealTime,
-        diet_Category,
+        diet_category,
         spice_level,
         area,
-        sweet_level
+        sweetDish
     });
 }
 

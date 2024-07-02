@@ -2,15 +2,17 @@ import { Socket } from 'socket.io';
 import { MenuItem } from '../../models/menuItem';
 import { addNotification } from './addNotification';
 import { pool } from '../../Db/db';
+import { RowDataPacket } from 'mysql2';
 
 // Handle admin-specific socket events
 export const handleAdminEvents = (socket: Socket) => {
 
     socket.on('add_item', async (data: MenuItem) => {
+        console.log("data----->",data)
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
-                'INSERT INTO menuitem (itemId, itemName, price,  mealType, availability, diet_category, spice_level, area, sweet_level ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,)',
+                'INSERT INTO menuitem (itemId, itemName, price,  mealType, availability, diet_category, spice_level, sweet_level, area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     data.id,
                     data.name,
@@ -41,14 +43,6 @@ export const handleAdminEvents = (socket: Socket) => {
     socket.on('delete_item', async data => {
         const { itemId, role } = data;
         try {
-            if (role !== 'admin') {
-                socket.emit('add_item_response', {
-                    success: false,
-                    message: 'Unauthorized',
-                });
-                return;
-            }
-
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
                 'DELETE FROM menuItem WHERE itemId = ?',
@@ -77,17 +71,48 @@ export const handleAdminEvents = (socket: Socket) => {
     });
 
     //Event listener for updating a menu item
-    socket.on('update_item', async ({ itemId, name, price }) => {
-        try {
-            const connection = await pool.getConnection();
-            await connection.execute(
-                'UPDATE menuItem SET itemName = ?, price = ? WHERE itemId = ?',
-                [name, price, itemId],
-            );
-            await addNotification('item updated: ' + name);
-            connection.release();
+    // socket.on('update_item', async ({ itemId, name, price }) => {
+    //     try {
+    //         const connection = await pool.getConnection();
+    //         await connection.execute(
+    //             'UPDATE menuItem SET itemName = ?, price = ? WHERE itemId = ?',
+    //             [name, price, itemId],
+    //         );
+    //         await addNotification('item updated: ' + name);
+    //         connection.release();
 
+    //         socket.emit('update_item_response', { success: true });
+    //     } catch (err) {
+    //         socket.emit('update_item_response', {
+    //             success: false,
+    //             message: 'Database error',
+    //         });
+    //         console.error('Database query error', err);
+    //     }
+    // });
+    socket.on('update_item', async ({ itemId, availability }) => {
+        try {
+            console.log("availability",availability,itemId)
+            const connection = await pool.getConnection();
+            const [existingItems] = await connection.execute<RowDataPacket[]>(
+                'SELECT * FROM menuitem WHERE itemId = ?',
+                [itemId],
+            );
+            if (existingItems.length === 0) {
+                connection.release();
+                socket.emit('update_item_response', {
+                    success: false,
+                    message: 'Item not found',
+                });
+                return;
+            }
+            await connection.execute(
+                'UPDATE menuitem SET availability = ? WHERE itemId = ?',
+                [availability, itemId],
+            );
+            connection.release();
             socket.emit('update_item_response', { success: true });
+            await addNotification('Item availability updated: ' + itemId);
         } catch (err) {
             socket.emit('update_item_response', {
                 success: false,

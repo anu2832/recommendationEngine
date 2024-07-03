@@ -163,6 +163,7 @@ socket.on('view_feedbacks_response', data => {
     } else {
         console.log('Failed to retrieve feedbacks: ' + data.message);
     }
+    employeeMenu(data.userId);
 });
 
 // Socket event handler for creating profile response
@@ -199,6 +200,21 @@ socket.on(
             }
         } else {
             console.error('Rollout data retrieval failed:', data);
+        }
+    },
+);
+
+// Socket event handler for feedback response
+socket.on(
+    'giveFeedback_response',
+    (data: { success: boolean; feedBack: any; userId: string }) => {
+        if (data.success) {
+            if (data.feedBack) {
+                console.table(data.feedBack);
+                console.log("Feedback submitted successfully")
+            }
+        } else {
+            console.error('Feedback not submitted:', data);
         }
     },
 );

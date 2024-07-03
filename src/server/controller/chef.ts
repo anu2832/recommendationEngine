@@ -85,7 +85,7 @@ async function createRollout(socket: Socket, data: any) {
             return;
         } else {
             const top5FoodItems = await getTopFoodItems(data.menuType);
-            await addNotification('New item added: ' + data.itemName);
+            await addNotification("Rollover is done.");
         }
 
         socket.emit('create_rollout_response', {

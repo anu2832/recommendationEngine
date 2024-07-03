@@ -632,8 +632,53 @@ async function voteForMenu(socket: Socket, data: any) {
 }
 
 // Function to give feedback on a menu item
+// async function giveFeedback(socket: Socket, data: any) {
+//     const { itemId, message, userId, rating, mealType } = data;
+//     try {
+//         const connection = await pool.getConnection();
+//         const [rows] = await connection.execute<RowDataPacket[]>(
+//             'SELECT * FROM menuitem WHERE itemId = ?',
+//             [itemId],
+//         );
+
+//         const menuItem = rows[0];
+
+//         await connection.execute(
+//             'INSERT INTO feedBack (id, itemId, userName, itemName, message, rating, mealType) VALUES (?, ?, ?, ?, ?, ?, ?)',
+//             [
+//                 itemId,
+//                 menuItem.itemId,
+//                 userId,
+//                 menuItem.itemName,
+//                 message,
+//                 rating,
+//                 menuItem.mealType,
+//             ],
+//         );
+
+//         connection.release();
+
+//         socket.emit('giveFeedback_response', {
+//             success: true,
+//             userId: userId,
+//             feedBack: rows,
+//         });
+//     } catch (err) {
+//         socket.emit('giveFeedback_response', {
+//             success: false,
+//             message: 'Database error',
+//         });
+//         console.error('Database query error', err);
+//     }
+// }
+function generateRandomItemId(): number {
+    return Math.floor(Math.random() * 1000); 
+}
+
+// Function to give feedback on a menu item
 async function giveFeedback(socket: Socket, data: any) {
-    const { itemId, message, userId, rating, mealType } = data;
+    const { message, userId, rating, mealType , itemId} = data;
+
     try {
         const connection = await pool.getConnection();
         const [rows] = await connection.execute<RowDataPacket[]>(
@@ -641,18 +686,28 @@ async function giveFeedback(socket: Socket, data: any) {
             [itemId],
         );
 
+        // Check if menu item exists
+        if (rows.length === 0) {
+            socket.emit('giveFeedback_response', {
+                success: false,
+                message: 'Menu item not found',
+            });
+            connection.release();
+            return;
+        }
+
         const menuItem = rows[0];
 
         await connection.execute(
             'INSERT INTO feedBack (id, itemId, userName, itemName, message, rating, mealType) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [
-                itemId,
+                generateRandomItemId(),
                 menuItem.itemId,
                 userId,
                 menuItem.itemName,
                 message,
                 rating,
-                menuItem.mealType,
+                mealType,
             ],
         );
 

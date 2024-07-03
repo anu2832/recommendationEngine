@@ -2,50 +2,32 @@ import { Socket } from 'socket.io';
 import { RowDataPacket } from 'mysql2/promise';
 import { pool } from '../../Db/db';
 
-
 export const handleEmployeeEvents = (socket: Socket) => {
+    //Event handler for creating a user profile.
     socket.on('create_profile', async data => {
-        const {
-            userId,
-            diet_category,
-            spice_level,
-            area,
-            sweet_level,
-        } = data;
-        
-          console.log(data,userId,"data->")
+        const { userId, diet_category, spice_level, area, sweet_level } = data;
+
+        console.log(data, userId, 'data->');
         try {
             const connection = await pool.getConnection();
             const [rows] = await connection.execute<RowDataPacket[]>(
                 'SELECT * FROM userInformation WHERE userId = ?',
                 [userId],
             );
- 
+
             if (rows.length > 0) {
                 await pool.query(
                     'UPDATE userInformation SET diet_category = ?, spice_level = ?, area = ?, sweet_level = ? WHERE userId = ?',
-                    [
-                        diet_category,
-                        spice_level,
-                        area,
-                        sweet_level,
-                        userId,
-                    ],
+                    [diet_category, spice_level, area, sweet_level, userId],
                 );
             } else {
                 await pool.query(
                     'INSERT INTO userInformation (userId, diet_category, spice_level, area, sweet_level) VALUES (?, ?, ?, ?, ?)',
-                    [
-                        userId,
-                        diet_category,
-                        spice_level,
-                        sweet_level,
-                        area,
-                    ],
+                    [userId, diet_category, spice_level, sweet_level, area],
                 );
             }
             console.log('Your profile has been created');
- 
+
             socket.emit('create_profile_response', {
                 success: false,
                 message: 'Your profile has been created',
@@ -59,9 +41,9 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', error);
         }
     });
- 
-    // Handle 'view_menu' event to fetch and send the menu items to the client.
-    socket.on('view_menu', async (data) => {
+
+    // Event handler for fetching and sending the menu items to the client.
+    socket.on('view_menu', async data => {
         const { userId } = data;
         try {
             const connection = await pool.getConnection();
@@ -70,7 +52,11 @@ export const handleEmployeeEvents = (socket: Socket) => {
             );
             connection.release();
 
-            socket.emit('view_menu_response', { success: true, menu: results,userId: userId });
+            socket.emit('view_menu_response', {
+                success: true,
+                menu: results,
+                userId: userId,
+            });
         } catch (err) {
             socket.emit('view_menu_response', {
                 success: false,
@@ -80,7 +66,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
-    /// Handle 'view_feedbacks' event to fetch and send feedbacks to the client.
+    /// Event handler for fetching and sending feedbacks to the client.
     socket.on('view_feedbacks', async () => {
         try {
             const connection = await pool.getConnection();
@@ -102,19 +88,18 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
-    // Handle 'rolloutMenu' event to fetch and send the rolled-out menu items to the client.
-    socket.on('rolloutMenu', async (data) => {
+    // Event handler for fetching and sending the rolled-out menu items to the client.
+    socket.on('rolloutMenu', async data => {
         const { userId } = data;
         let connection;
         try {
             connection = await pool.getConnection();
- 
+
             // Fetch user profile
-            const [userProfileResults] = await connection.execute<RowDataPacket[]>(
-                'SELECT * FROM userInformation WHERE userId = ?',
-                [userId]
-            );
- 
+            const [userProfileResults] = await connection.execute<
+                RowDataPacket[]
+            >('SELECT * FROM userInformation WHERE userId = ?', [userId]);
+
             if (userProfileResults.length === 0) {
                 socket.emit('view_rollout_response', {
                     success: false,
@@ -122,10 +107,10 @@ export const handleEmployeeEvents = (socket: Socket) => {
                 });
                 return;
             }
- 
+
             const userProfile = userProfileResults[0];
             console.log(userProfile);
- 
+
             // Fetch rollout items with details from menuitem table
             const [rolloutResults] = await connection.execute<RowDataPacket[]>(
                 `SELECT r.*,
@@ -134,51 +119,66 @@ export const handleEmployeeEvents = (socket: Socket) => {
                     m.area,
                     m.sweet_level
              FROM rollover r
-             JOIN menuitem m ON r.itemId = m.itemId`
+             JOIN menuitem m ON r.itemId = m.itemId`,
             );
- 
+
             // Sort rollout items based on user profile
             const sortedRolloutItems = rolloutResults.sort((a, b) => {
-                // Custom sorting logic based on user profile
- 
-                // Sort by diet preference
-                if (a.diet_category === userProfile.diet_category && b.diet_category !== userProfile.diet_category) {
+                if (
+                    a.diet_category === userProfile.diet_category &&
+                    b.diet_category !== userProfile.diet_category
+                ) {
                     return -1;
                 }
-                if (a.diet_category !== userProfile.diet_category && b.diet_category === userProfile.diet_category) {
+                if (
+                    a.diet_category !== userProfile.diet_category &&
+                    b.diet_category === userProfile.diet_category
+                ) {
                     return 1;
                 }
- 
-                // Sort by spice preference
-                if (a.spice_level === userProfile.spice_level && b.spice_level !== userProfile.spice_level) {
+                if (
+                    a.spice_level === userProfile.spice_level &&
+                    b.spice_level !== userProfile.spice_level
+                ) {
                     return -1;
                 }
-                if (a.spice_level !== userProfile.spice_level && b.spice_level === userProfile.spice_level) {
+                if (
+                    a.spice_level !== userProfile.spice_level &&
+                    b.spice_level === userProfile.spice_level
+                ) {
                     return 1;
                 }
- 
-                // Sort by region preference
-                if (a.area === userProfile.area && b.area !== userProfile.area) {
+                if (
+                    a.area === userProfile.area &&
+                    b.area !== userProfile.area
+                ) {
                     return -1;
                 }
-                if (a.area !== userProfile.area && b.area === userProfile.area) {
+                if (
+                    a.area !== userProfile.area &&
+                    b.area === userProfile.area
+                ) {
                     return 1;
                 }
- 
-                // Sort by sweet dish preference
-                if (a.sweet_level === userProfile.sweet_level && b.sweet_level !== userProfile.sweet_level) {
+                if (
+                    a.sweet_level === userProfile.sweet_level &&
+                    b.sweet_level !== userProfile.sweet_level
+                ) {
                     return -1;
                 }
-                if (a.sweet_level !== userProfile.sweet_level && b.sweet_level === userProfile.sweet_level) {
+                if (
+                    a.sweet_level !== userProfile.sweet_level &&
+                    b.sweet_level === userProfile.sweet_level
+                ) {
                     return 1;
                 }
- 
+
                 return 0;
             });
- 
-            console.log(sortedRolloutItems)
+
+            console.log(sortedRolloutItems);
             connection.release();
- 
+
             socket.emit('rollout_response', {
                 success: true,
                 rollOutData: sortedRolloutItems,
@@ -192,7 +192,8 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
-    // Handle 'voteForMenu' event to fetch and send the rolled-out menu items to the client.
+
+    // Event handler for voting for a menu item.
     socket.on('vote_for_menu', async data => {
         const { userId, itemId } = data;
         try {
@@ -236,6 +237,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
         }
     });
 
+    //Event handler for giving feedback on a menu item.
     socket.on(
         'give_feedBack',
         async ({ itemId, message, userId, rating, mealType }) => {
@@ -288,6 +290,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
         },
     );
 
+    //Event handler for fetching and sending the finalized menu items to the client.
     socket.on('finalizedMenu', async data => {
         const { userId } = data;
         try {
@@ -309,8 +312,9 @@ export const handleEmployeeEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
-    
-socket.on('viewNotification', async data => {
+
+    //Event handler for viewing notifications.
+    socket.on('viewNotification', async data => {
         const { userId } = data;
         console.log(userId);
         try {
@@ -318,15 +322,15 @@ socket.on('viewNotification', async data => {
             const notifications = await getNotifications(
                 lastNotificationId ?? undefined,
             );
- 
+
             const connection = await pool.getConnection();
             if (notifications.length > 0) {
                 const latestNotificationId = notifications[0].notificationId;
                 console.log(latestNotificationId);
- 
+
                 await updateLastNotificationId(userId, latestNotificationId);
             }
- 
+
             socket.emit('viewNotification_response', {
                 success: true,
                 userId: data.userId,
@@ -340,7 +344,6 @@ socket.on('viewNotification', async data => {
             console.error('Database query error', err);
         }
     });
- 
 };
 
 async function getLastNotificationId(userId: number): Promise<number | null> {
@@ -359,7 +362,7 @@ async function getLastNotificationId(userId: number): Promise<number | null> {
         connection.release();
     }
 }
- 
+
 async function updateLastNotificationId(
     userId: number,
     notificationId: number,
@@ -370,7 +373,7 @@ async function updateLastNotificationId(
             'SELECT * FROM userNotificationHistory WHERE userId = ?',
             [userId],
         );
- 
+
         if (rows.length > 0) {
             await connection.execute(
                 'UPDATE userNotificationHistory SET notificationId = ? WHERE userId = ?',
@@ -386,7 +389,7 @@ async function updateLastNotificationId(
         connection.release();
     }
 }
- 
+
 export async function getNotifications(sinceNotificationId?: number) {
     const connection = await pool.getConnection();
     try {
@@ -406,4 +409,3 @@ export async function getNotifications(sinceNotificationId?: number) {
         connection.release();
     }
 }
- 

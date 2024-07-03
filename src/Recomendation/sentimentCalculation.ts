@@ -9,6 +9,7 @@ interface FoodSentiment {
     overallSentiment: string;
 }
 
+//calculating the food sentiment
 export class FoodSentimentCalculator {
     private dbService: DatabaseService;
     private sentimentAnalyzer: SentimentAnalyzer;
@@ -56,6 +57,7 @@ export class FoodSentimentCalculator {
         return { foodId, averageRating, overallSentiment };
     }
 
+    //calculating all food sentiments
     async calculateAllFoodSentiments(
         menuItem?: string,
     ): Promise<FoodSentiment[]> {

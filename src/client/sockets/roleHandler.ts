@@ -3,6 +3,7 @@ import { displayUserPortal } from './authHandler';
 import { chefMenu } from './chefHandler';
 import { employeeMenu } from './employeeHandler';
 
+//Manage activities based on user role.
 export function manageRoleActivities(role: string, userId: string) {
     console.log(`\nWelcome, ${role}`);
     switch (role) {

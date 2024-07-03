@@ -18,9 +18,9 @@ export async function getTopFoodItems(menuType?: string): Promise<any[]> {
     foodSentiments.sort((a, b) => b.averageRating - a.averageRating);
 
     const top5FoodItems = menuType
-    ? foodSentiments.slice(0, 5)
-    : foodSentiments.slice(-5);
-    console.log(top5FoodItems)
+        ? foodSentiments.slice(0, 5)
+        : foodSentiments.slice(-5);
+    console.log(top5FoodItems);
     await foodService.clearRolloutTable();
 
     if (menuType) {

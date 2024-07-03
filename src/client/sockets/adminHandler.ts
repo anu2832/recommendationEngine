@@ -2,6 +2,7 @@ import { question, rl } from '../../utils/rl';
 import { socket } from '../../utils/socket';
 import { logOut } from './authHandler';
 
+//Operations of Admin
 export function adminMenu() {
     console.log('\nAdmin Operations:');
     console.log('---------------------------------------');
@@ -25,6 +26,7 @@ export function adminMenu() {
     });
 }
 
+//Modifying menu
 function modifyMenu() {
     console.log('Modify Menu:');
     console.log('---------------------------------------');
@@ -63,10 +65,12 @@ async function updateItem(role: string) {
 
     socket.once('check_item_exists_response', async response => {
         if (response.success && response.exists) {
-            const availability = await question('Enter availability for the item: ');
+            const availability = await question(
+                'Enter availability for the item: ',
+            );
             socket.emit('update_item', {
                 itemId: id,
-                availability: availability
+                availability: availability,
             });
         } else {
             console.log('Item ID not found.');
@@ -95,7 +99,7 @@ async function addItem(role: string) {
         diet_category,
         spice_level,
         area,
-        sweetDish
+        sweetDish,
     });
 }
 
@@ -103,8 +107,6 @@ async function deleteItem(role: string) {
     const itemId = await question('Item id ');
     socket.emit('delete_item', { itemId, role });
 }
-
-
 
 socket.on('add_item_response', data => {
     if (data.success) {

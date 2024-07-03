@@ -1,4 +1,3 @@
-// rollOutService.ts
 import { DatabaseService } from './dbOperation';
 
 export class FoodService {
@@ -8,15 +7,18 @@ export class FoodService {
         this.dbService = dbService;
     }
 
+    //Fetch details of a specific food item
     async fetchFoodDetails(foodId: string): Promise<any> {
         return await this.dbService.fetchFoodDetails(foodId);
     }
 
+    //Clears all entries in the rollout table
     async clearRolloutTable(): Promise<void> {
-        console.log("clearing rollout tbl")
+        console.log('clearing rollout tbl');
         await this.dbService.clearRolloutTable();
     }
 
+    //Inserting a food item into the rollout table
     async insertIntoRollout(
         foodId: string,
         name: string,

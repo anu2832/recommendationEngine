@@ -1,8 +1,8 @@
 import mysql, { RowDataPacket } from 'mysql2/promise';
 import { pool } from '../Db/db';
 
-
 export class DatabaseService {
+    //fetching feedback for specific food item
     async fetchFeedback(foodId: string): Promise<RowDataPacket[]> {
         const connection = await pool.getConnection();
         const [results] = await connection.execute<RowDataPacket[]>(
@@ -27,7 +27,6 @@ export class DatabaseService {
             );
         }
         connection.release();
-        //console.log("fetchAllFoods",results);
         return results.map((row: any) => row.itemId);
     }
 

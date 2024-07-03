@@ -33,9 +33,7 @@ export const handleChefEvents = (socket: Socket) => {
     socket.on('create_rollout', async data => {
         try {
             const connection = await pool.getConnection();
- 
             const currentDate = new Date().toISOString().slice(0, 10);
- 
             const [rolloutResults] = await connection.execute<RowDataPacket[]>(
                 `SELECT r.*,
                     m.diet_category,
@@ -46,23 +44,24 @@ export const handleChefEvents = (socket: Socket) => {
              FROM rollover r
              JOIN menuitem m ON r.itemId = m.itemId
              WHERE DATE(r.rolloverCreationTime) = ? AND m.mealType = ?`,
-                [currentDate, data.menuType]
+                [currentDate, data.menuType],
             );
- 
+
             if (rolloutResults.length > 0) {
-                console.log(`RollOut menu is already created for ${data.menuType}`);
+                console.log(
+                    `RollOut menu is already created for ${data.menuType}`,
+                );
                 socket.emit('get_recommendation_response', {
                     success: false,
                     message: `RollOut menu is already created for ${data.menuType}`,
                     rolloutMenu: rolloutResults,
                 });
                 return;
-            }
-            else {
+            } else {
                 const top5FoodItems = await getTopFoodItems(data.menuType);
                 await addNotification('New item added: ' + data.itemName);
             }
- 
+
             socket.emit('create_rollout_response', {
                 success: true,
                 message: `New RollOut Menu created for  ${data.menuType}`,
@@ -77,27 +76,26 @@ export const handleChefEvents = (socket: Socket) => {
         }
     });
 
+    //Selecting the top voted menu item and add it to the finalized menu
     socket.on('selectedMenu', async data => {
         let connection;
         try {
             connection = await pool.getConnection();
- 
             const [maxVoteItem] = await connection.execute<RowDataPacket[]>(
                 'SELECT r.*, m.mealType FROM rollover r JOIN menuitem m ON r.itemId = m.itemId ORDER BY r.vote DESC LIMIT 1',
             );
             console.log(maxVoteItem[0]);
- 
+
             if (maxVoteItem.length > 0) {
                 const { itemId, itemName, mealType } = maxVoteItem[0];
                 const currentDate = new Date().toISOString().slice(0, 10);
- 
                 const [existingFinalMenuItems] = await connection.execute<
                     RowDataPacket[]
                 >(
                     'SELECT * FROM finalizedMenu WHERE itemId = ? AND preparedOn = ?',
                     [itemId, currentDate],
                 );
- 
+
                 if (existingFinalMenuItems.length > 0) {
                     console.log(
                         `Item has already been added to the final_menu for '${mealType}' for today.`,
@@ -109,16 +107,16 @@ export const handleChefEvents = (socket: Socket) => {
                     connection.release();
                     return;
                 }
- 
+
                 await connection.execute(
                     'INSERT INTO finalizedMenu (itemId, itemName, preparedOn) VALUES (?, ?, ?)',
                     [itemId, itemName, currentDate],
                 );
- 
+
                 console.log(
                     `Item '${itemName}' with ID '${itemId}' added to final_menu for date '${currentDate}'`,
                 );
- 
+
                 await addNotification(
                     'FinalMenu item: ' +
                         itemName +
@@ -127,7 +125,7 @@ export const handleChefEvents = (socket: Socket) => {
                         ' added to final_menu for date ' +
                         currentDate,
                 );
- 
+
                 socket.emit('finalizedMenu_response', {
                     success: true,
                     message: `Item '${itemName}' with ID '${itemId}' added to final_menu for date '${currentDate}'`,
@@ -139,11 +137,11 @@ export const handleChefEvents = (socket: Socket) => {
                     message: 'No items found in rollover table.',
                 });
             }
- 
+
             connection.release();
         } catch (error) {
             if (connection) connection.release();
- 
+
             console.error('Error finalizing menu:', error);
             socket.emit('finalizedMenu_response', {
                 success: false,
@@ -152,49 +150,58 @@ export const handleChefEvents = (socket: Socket) => {
         }
     });
 
+    // Generate a discard list for items with average rating less than 2
     socket.on('discardItemList', async data => {
         try {
             const canProceed = await canPerformOperation();
             let lowerItem = await getTopFoodItems();
- 
+
             if (!canProceed) {
-                console.log('You can only generate a discard list once a month.');
+                console.log(
+                    'You can only generate a discard list once a month.',
+                );
                 socket.emit('discard_response', {
                     success: false,
-                    message: 'You can only generate a discard list once a month.',
+                    message:
+                        'You can only generate a discard list once a month.',
                 });
                 return;
             }
- 
+
             lowerItem = lowerItem.filter(item => item.averageRating < 2);
- 
+
             if (lowerItem.length === 0) {
-                console.log('No items with an average rating less than 2 found.');
+                console.log(
+                    'No items with an average rating less than 2 found.',
+                );
                 socket.emit('discard_response', {
                     success: false,
-                    message: 'No items with an average rating less than 2 found.',
+                    message:
+                        'No items with an average rating less than 2 found.',
                 });
                 return;
             }
- 
+
             const dateTime = new Date()
                 .toISOString()
                 .slice(0, 19)
                 .replace('T', ' ');
- 
+
             for (const item of lowerItem) {
                 await pool.execute(
                     'INSERT INTO discardItemlist (discardItemId, itemId, Date) VALUES (?, ?, ?)',
                     [0, item.foodId, dateTime],
                 );
-                await pool.execute('DELETE FROM menuitem WHERE itemId = ?', [item.foodId]);
+                await pool.execute('DELETE FROM menuitem WHERE itemId = ?', [
+                    item.foodId,
+                ]);
             }
- 
+
             console.log('Discard list generated successfully.');
             socket.emit('discard_response', {
                 success: true,
                 message: 'Discard list generated successfully.',
-                discardItems:lowerItem
+                discardItems: lowerItem,
             });
         } catch (error) {
             console.error('Error in discard list making:', error);
@@ -205,6 +212,7 @@ export const handleChefEvents = (socket: Socket) => {
         }
     });
 
+    // View the current menu
     socket.on('see_menu', async () => {
         try {
             const connection = await pool.getConnection();
@@ -221,16 +229,17 @@ export const handleChefEvents = (socket: Socket) => {
             console.error('Database query error', err);
         }
     });
- 
+
+    // View the feedback of menu items
     socket.on('see_feedback', async () => {
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
                 'SELECT * FROM feedBack',
             );
-            console.log("results--->",results)
+            console.log('results--->', results);
             connection.release();
- 
+
             socket.emit('see_feedback_response', {
                 success: true,
                 itemFeedback: results,
@@ -245,9 +254,9 @@ export const handleChefEvents = (socket: Socket) => {
     });
 };
 
+// Check if a discard operation can be performed
 export async function canPerformOperation(): Promise<boolean> {
     const lastDiscardedItem = await getLatestDiscardedItem();
-    console.log(lastDiscardedItem,"--------->")
     if (lastDiscardedItem) {
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -258,7 +267,7 @@ export async function canPerformOperation(): Promise<boolean> {
     }
     return true;
 }
-
+// // Get the latest discarded item
 export async function getLatestDiscardedItem(): Promise<any> {
     const connection = await pool.getConnection();
     const [rows] = await connection.execute<RowDataPacket[]>(

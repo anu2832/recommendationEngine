@@ -6,9 +6,7 @@ import { RowDataPacket } from 'mysql2';
 
 // Handle admin-specific socket events
 export const handleAdminEvents = (socket: Socket) => {
-
     socket.on('add_item', async (data: MenuItem) => {
-        console.log("data----->",data)
         try {
             const connection = await pool.getConnection();
             const [results] = await connection.execute(
@@ -22,7 +20,7 @@ export const handleAdminEvents = (socket: Socket) => {
                     data.diet_category,
                     data.spice_level,
                     data.area,
-                    data.sweetDish
+                    data.sweetDish,
                 ],
             );
             connection.release();
@@ -39,6 +37,7 @@ export const handleAdminEvents = (socket: Socket) => {
             console.error('Database query error:-', err);
         }
     });
+
     //Event listener for deleting a menu item
     socket.on('delete_item', async data => {
         const { itemId, role } = data;
@@ -70,29 +69,10 @@ export const handleAdminEvents = (socket: Socket) => {
         }
     });
 
-    //Event listener for updating a menu item
-    // socket.on('update_item', async ({ itemId, name, price }) => {
-    //     try {
-    //         const connection = await pool.getConnection();
-    //         await connection.execute(
-    //             'UPDATE menuItem SET itemName = ?, price = ? WHERE itemId = ?',
-    //             [name, price, itemId],
-    //         );
-    //         await addNotification('item updated: ' + name);
-    //         connection.release();
-
-    //         socket.emit('update_item_response', { success: true });
-    //     } catch (err) {
-    //         socket.emit('update_item_response', {
-    //             success: false,
-    //             message: 'Database error',
-    //         });
-    //         console.error('Database query error', err);
-    //     }
-    // });
+    //Event listener for updating availability of menu item
     socket.on('update_item', async ({ itemId, availability }) => {
         try {
-            console.log("availability",availability,itemId)
+            console.log('availability', availability, itemId);
             const connection = await pool.getConnection();
             const [existingItems] = await connection.execute<RowDataPacket[]>(
                 'SELECT * FROM menuitem WHERE itemId = ?',

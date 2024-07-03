@@ -1,6 +1,6 @@
-import { pool } from "../../Db/db";
+import { pool } from '../../Db/db';
 
-
+//Adding a notification to the database
 export async function addNotification(message: string) {
     try {
         const expiryTime = new Date();

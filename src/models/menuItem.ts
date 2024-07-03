@@ -1,3 +1,4 @@
+//Interface representing  menuitem
 export interface MenuItem {
     id: number;
     name: string;

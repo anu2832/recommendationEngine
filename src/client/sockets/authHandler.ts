@@ -3,6 +3,7 @@ import { rl } from '../../utils/rl';
 import { manageRoleActivities } from './roleHandler';
 import { socket } from '../../utils/socket';
 
+// Displaying the user portal with options to register or login
 export function displayUserPortal() {
     console.log('\nUser Portal:');
     console.log('---------------------------------------');
@@ -27,6 +28,7 @@ export function displayUserPortal() {
     });
 }
 
+//Prompt user for details and emit a registration event
 function creatingNewUser() {
     rl.question('Enter user ID: ', (employeeId: string) => {
         rl.question('Enter Name: ', (name: string) => {
@@ -37,6 +39,7 @@ function creatingNewUser() {
     });
 }
 
+// Prompt user for login details and emit an authentication event
 function login() {
     console.log('\nUser Login:');
     rl.question('| Enter Employee ID: ', employeeId => {
@@ -47,11 +50,14 @@ function login() {
     });
 }
 
+// Emit a logout event
 export function logOut() {
     console.log('inside');
     socket.emit('logout');
     rl.close();
 }
+
+// Handle authentication response from the server
 socket.on(
     'auth_response',
     (data: {
@@ -73,13 +79,20 @@ socket.on(
         }
     },
 );
+
+// Handle registration response from the server
 socket.on(
     'register_response',
-    (data: { success: boolean; message: string; role?: string; userId: string}) => {
+    (data: {
+        success: boolean;
+        message: string;
+        role?: string;
+        userId: string;
+    }) => {
         if (data.success) {
             console.log('Registration successful!');
             if (data.role) {
-                 manageRoleActivities(data.role,data.userId);
+                manageRoleActivities(data.role, data.userId);
             }
         } else {
             console.log('Registration failed: ' + data.message);

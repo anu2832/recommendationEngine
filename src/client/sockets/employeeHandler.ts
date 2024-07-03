@@ -3,6 +3,7 @@ import { socket } from '../../utils/socket';
 import { logOut } from './authHandler';
 import { finalizedMenu } from './chefHandler';
 
+//Displaying the employee menu.
 export function employeeMenu(userId: string) {
     console.log('Employee operations:');
     console.log('---------------------------------------');
@@ -46,22 +47,27 @@ export function employeeMenu(userId: string) {
     });
 }
 
+//Emit an event to view all feedbacks.
 function viewFeedbacks() {
     socket.emit('view_feedbacks');
 }
 
+//Emit an event to vote for the menu.
 function voteforMenu(userId: string) {
     socket.emit('rolloutMenu', { userId: userId });
 }
 
-function viewNotification(userId:string) {
-    socket.emit('viewNotification',{ userId: userId });
+//Emit an event to view notifications.
+function viewNotification(userId: string) {
+    socket.emit('viewNotification', { userId: userId });
 }
 
+//Emit an event to display the final menu.
 function displayFinalMenu(userId: string) {
     socket.emit('finalizedMenu', { userId: userId });
-} 
+}
 
+//Prompt the user to create a profile
 async function makeProfile(userId: string) {
     const diet_category = await question(
         'Are you vegetarian, non-vegetarian, or eggetarian?',
@@ -73,7 +79,7 @@ async function makeProfile(userId: string) {
         'Do you prefer North Indian or South Indian food?',
     );
     const sweet_level = await question('Do you like sweet foods?');
-    console.log("userId->",userId)
+    console.log('userId->', userId);
     socket.emit('create_profile', {
         userId,
         diet_category,
@@ -82,7 +88,8 @@ async function makeProfile(userId: string) {
         sweet_level,
     });
 }
- 
+
+//Prompt the user for feedback input
 async function giveFeedbackInput(userId: string) {
     const id = await question('Item id ');
     const feedback = await question('Item feedback ');
@@ -97,28 +104,33 @@ async function giveFeedbackInput(userId: string) {
     });
 }
 
+//Display the final menu
 async function providingFeedback(userId: string) {
     displayFinalMenu(userId);
 }
 
+//Emit an event to view the current menu
 export async function seeMenu(userId: string) {
-    socket.emit('view_menu',{userId: userId});
+    socket.emit('view_menu', { userId: userId });
 }
 
+//Prompt the user to vote for an item
 async function voteForItem(userId: string) {
     const itemId = await question('Enter Item Id that you want to vote:  ');
     socket.emit('vote_for_menu', { userId: userId, itemId: itemId });
 }
 
+//Socket event handler for viewing menu response
 socket.on('view_menu_response', data => {
     if (data.success) {
-      console.table(data.menu)
+        console.table(data.menu);
     } else {
         console.log('Failed to retrieve menu: ' + data.message);
     }
     employeeMenu(data.userId);
 });
-// Socket event handler
+
+// Socket event handler for viewing notifications response
 socket.on('viewNotification_response', data => {
     if (data.success) {
         console.log(' Notification');
@@ -126,13 +138,14 @@ socket.on('viewNotification_response', data => {
     } else {
         console.error(data.message);
     }
-    employeeMenu(data.userID)
+    employeeMenu(data.userID);
 });
 
+// Socket event handler for voting for menu response
 socket.on(
     'vote_for_menu_response',
     (data: { success: boolean; message: any; userId: string }) => {
-        console.log("data-->",data)
+        console.log('data-->', data);
         if (data.success) {
             console.log(data.message);
         } else {
@@ -142,16 +155,17 @@ socket.on(
     },
 );
 
-// Socket event handler
+// Socket event handler for viewing feedbacks response
 socket.on('view_feedbacks_response', data => {
     console.log(data);
     if (data.success) {
-        console.table(data.menu)
+        console.table(data.menu);
     } else {
         console.log('Failed to retrieve feedbacks: ' + data.message);
     }
 });
 
+// Socket event handler for creating profile response
 socket.on('create_profile_response', data => {
     if (data.success) {
         console.log('Your profile is created\n');
@@ -161,8 +175,9 @@ socket.on('create_profile_response', data => {
     employeeMenu(data.userId);
 });
 
+// Socket event handler for showing final menulist response
 socket.on('show_finalList_response', data => {
-    console.log(" menu")
+    console.log(' menu');
     if (data.success) {
         console.table(data.finalList);
         giveFeedbackInput(data.userId);
@@ -171,6 +186,7 @@ socket.on('show_finalList_response', data => {
     }
 });
 
+// Socket event handler for rollover response
 socket.on(
     'rollout_response',
     (data: { success: boolean; rollOutData: any; userId: string }) => {

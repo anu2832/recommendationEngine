@@ -84,10 +84,10 @@ async function addItem(role: string) {
     const name = await question('Enter name of item: ');
     const price = await question('Enter price: ');
     const availability = await question('Enter availability: ');
-    const mealTime = await question('Enter type of meal: ');
-    const diet_category = await question('Enter dietType: ');
-    const spice_level = await question('Enter spiceType: ');
-    const area = await question('Enter the region: ');
+    const mealTime = await question('Enter type of meal(breakfast/lunch/dinner): ');
+    const diet_category = await question('Enter dietType(veg/non-veg/eggeterian): ');
+    const spice_level = await question('Enter spice leve(low/medium/high): ');
+    const area = await question('Enter the region(north/south): ');
     const sweetDish = await question('Is it sweetDish: ');
     socket.emit('add_item', {
         id,

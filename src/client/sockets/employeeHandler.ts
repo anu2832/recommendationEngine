@@ -159,7 +159,7 @@ socket.on(
 socket.on('view_feedbacks_response', data => {
     console.log(data);
     if (data.success) {
-        console.table(data.menu);
+        console.table(data.feedbacks);
     } else {
         console.log('Failed to retrieve feedbacks: ' + data.message);
     }

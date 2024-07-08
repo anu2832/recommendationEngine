@@ -8,12 +8,13 @@ export function chefMenu() {
     console.log('---------------------------------------');
     console.log('|  Option  |       Description         |');
     console.log('---------------------------------------');
-    console.log('|    1     |       View Menu           |');
-    console.log('|    2     |       RollOut Menu        |');
-    console.log('|    3     |       Finalize Menu       |');
-    console.log('|    4     |       Discard Item List   |');
-    console.log('|    5     |       See feedback        |');
-    console.log('|    6     |       Logout              |');
+    console.log('|    1     |   View Menu               |');
+    console.log('|    2     |   RollOut Menu            |');
+    console.log('|    3     |   Finalize Menu           |');
+    console.log('|    4     |   List of Discarded items |');
+    console.log('|    5     |   Modify Discard List     |');
+    console.log('|    6     |   See feedback            |');
+    console.log('|    7     |   Logout                  |');
     console.log('---------------------------------------');
 
     rl.question('Choose an option: ', option => {
@@ -31,9 +32,12 @@ export function chefMenu() {
                 discardItemList();
                 break;
             case '5':
-                seeFeedback();
+                modifyDiscardList();
                 break;
             case '6':
+                seeFeedback();
+                break;
+            case '7':
                 logOut();
             default:
                 console.log('Invalid option');
@@ -55,7 +59,7 @@ export async function finalizedMenu() {
 
 // Emit an event to create a discard item list
 function discardItemList() {
-    socket.emit('discardItemList');
+    socket.emit('allDiscardedItems');
 }
 
 // Emit an event to view the current menu
@@ -63,6 +67,20 @@ function viewMenu() {
     socket.emit('see_menu');
 }
 
+// Modify discard list 
+async function modifyDiscardList(){
+    const choice=await question('do you want to delete form menu or discard list? (menu/discard)');
+    const id=await question('Enter the ID of the item for the above operation');
+
+    if(choice==='menu' || choice === 'discard'){
+        socket.emit('modifyDiscardList',{choice,id})
+    }
+    else{
+        console.log(`invalid choice. please enter "menu" or "dicard".`)
+        await modifyDiscardList();
+    }
+    
+}
 // Emit an event to view feedback
 function seeFeedback() {
     socket.emit('see_feedback');
@@ -152,4 +170,13 @@ socket.on('get_recommendation_response', data => {
         console.log('Failed to show the rolledOver menu: ' + data.message);
         chefMenu();
     }
+});
+
+socket.on('modify_discard_list_response', data => {
+    if (data.success) {
+        console.log(data.message);
+    } else {
+        console.log(data.message);
+    }
+    chefMenu();
 });

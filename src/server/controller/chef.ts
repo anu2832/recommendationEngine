@@ -18,9 +18,13 @@ export const handleChefEvents = (socket: Socket) => {
         await selectMenu(socket, data);
     });
 
-    socket.on('discardItemList', async data => {
-        await generateDiscardList(socket, data);
+    socket.on('allDiscardedItems', async data => {
+        await createDiscardList(socket, data);
     });
+
+    socket.on('modifyDiscardList',async data => {
+        await modifyDiscardList(socket,data)
+    })
 
     socket.on('see_menu', async () => {
         await viewMenu(socket);
@@ -54,6 +58,60 @@ async function checkItemExists(socket: Socket, itemId: string) {
         console.error('Database query error', err);
     }
 }
+
+export const modifyDiscardList = async (
+    socket: Socket,
+    data: any,
+) => {
+    const { choice,id } = data;
+    try {
+ 
+        const connection = await pool.getConnection();
+        const [discardResults] = await connection.execute<RowDataPacket[]>('SELECT * FROM discardItemList WHERE itemId = ?', [id]);
+ 
+        if (discardResults.length === 0) {
+            socket.emit('modify_discard_list_response', {
+                success: false,
+                message: 'Item not found in discard list.',
+            });
+            return;
+        }
+ 
+        if (choice === 'menu') {
+            await connection.beginTransaction();
+ 
+            await connection.execute('DELETE FROM discardItemList WHERE itemId = ?', [id]);
+ 
+            await connection.execute('DELETE FROM menuitem WHERE id = ?', [id]);
+ 
+ 
+            socket.emit('modify_discard_list_response', {
+                success: true,
+                message: 'Item successfully deleted from menu and discard list.',
+            });
+        } else if (choice === 'discard') {
+            await connection.execute('DELETE FROM discardItemList WHERE itemId = ?', [id]);
+ 
+            socket.emit('modify_discard_list_response', {
+                success: true,
+                message: 'Item successfully deleted from discard list.',
+            });
+        } else {
+            socket.emit('modify_discard_list_response', {
+                success: false,
+                message: 'Invalid choice.',
+            });
+        }
+    } catch (error) {
+        console.error('Error modifying item:', error);
+ 
+        socket.emit('modify_discard_list_response', {
+            success: false,
+            message: 'Failed to modify item.',
+        });
+    }
+}
+ 
 
 // Function to create a rollout with top food items based on menu type
 async function createRollout(socket: Socket, data: any) {
@@ -177,7 +235,7 @@ async function selectMenu(socket: Socket, data: any) {
 }
 
 // Function to generate a discard list for items with average rating less than 2
-async function generateDiscardList(socket: Socket, data: any) {
+async function createDiscardList(socket: Socket, data: any) {
     try {
         const canProceed = await canPerformOperation();
         let lowerItem = await getTopFoodItems();
@@ -280,17 +338,33 @@ async function viewFeedback(socket: Socket) {
 }
 
 // Check if a discard operation can be performed
+// export async function canPerformOperation(): Promise<boolean> {
+//     const lastDiscardedItem = await getLatestDiscardedItem();
+//     if (lastDiscardedItem) {
+//         const oneMonthAgo = new Date();
+//         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+//         const discardedAt = new Date(lastDiscardedItem.date);
+//         if (discardedAt > oneMonthAgo) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
 export async function canPerformOperation(): Promise<boolean> {
     const lastDiscardedItem = await getLatestDiscardedItem();
     if (lastDiscardedItem) {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        const discardedAt = new Date(lastDiscardedItem.date);
-        if (discardedAt > oneMonthAgo) {
+        if (isWithinLast30Days(lastDiscardedItem.date)) {
             return false;
         }
     }
     return true;
+}
+
+function isWithinLast30Days(date: string | Date): boolean {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+    const discardedAt = new Date(date);
+    return discardedAt > oneMonthAgo;
 }
 
 // Get the latest discarded item

@@ -8,6 +8,14 @@ export const handleEmployeeEvents = (socket: Socket) => {
         await createProfile(socket, data);
     });
 
+    socket.on('give_recipe', async data => {
+        await giveOwnRecipe(socket, data);
+    });
+
+    socket.on('discardItems_list', async data => {
+        await seeDiscardList(socket, data);
+    });
+
     socket.on('view_menu', async data => {
         await viewMenu(socket, data);
     });
@@ -447,3 +455,83 @@ export async function getNotifications(sinceNotificationId?: number) {
     }
 }
 
+//func to give your own receipe
+export const giveOwnRecipe = async (socket: Socket, data: any) => {
+    const { id, dislikeReason, tasteExpectations, message } = data;
+ 
+    try {
+        const connection = await pool.getConnection();
+ 
+        const [discardResults] = await connection.execute<RowDataPacket[]>(
+            `SELECT d.*, m.itemName AS itemName, m.mealType
+             FROM discardItemList d
+             JOIN menuitem m ON d.itemId = m.itemId
+             WHERE d.itemId = ?`, [id]
+        );
+ 
+        if (discardResults.length <= 0) {
+            connection.release();
+            socket.emit('give_discard_response', {
+                success: false,
+                message: 'Item ID not found in discard list',
+            });
+            return;
+        }
+ 
+        await connection.execute(
+            `INSERT INTO discardItemFeedback (itemId, itemConcern, tastePreference, ownReceipe) VALUES (?, ?, ?, ?)`,
+            [
+                id,
+                dislikeReason,
+                tasteExpectations,
+                message
+            ]
+        );
+        connection.release();
+ 
+        socket.emit('give_discard_response', {
+            success: true,
+            message: 'Message, feedback, and rating stored in feedback table successfully',
+            discardList: discardResults,
+        });
+    } catch (err) {
+        socket.emit('give_discard_response', {
+            success: false,
+            message: 'Database error',
+        });
+        console.error('Database query error', err);
+    }
+};
+
+// func to view discard list
+export const seeDiscardList = async (socket: Socket, data: any) => {
+    try {
+        const connection = await pool.getConnection();
+        const [results] = await connection.execute<RowDataPacket[]>(
+            `SELECT d.*, m.itemName AS itemName
+             FROM discardItemList d
+             JOIN menuitem m ON d.itemId = m.itemId`
+        );
+        connection.release();
+ 
+        if (results.length <= 0) {
+            socket.emit('discard_response', {
+                success: true,
+                discardList: results,
+                userId: data.userId
+            });
+        }
+ 
+        socket.emit('discard_response', {
+            success: true,
+            discardList: results,
+            userId: data.userId
+        });
+    } catch (err) {
+        socket.emit('discard_response', {
+            success: false,
+            message: 'Database error',
+        });
+        console.error('Database query error', err);
+    }
+};

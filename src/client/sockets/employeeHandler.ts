@@ -9,13 +9,14 @@ export function employeeMenu(userId: string) {
     console.log('---------------------------------------');
     console.log('|  Option  |       Description         |');
     console.log('---------------------------------------');
-    console.log('|    1     |       See menu            |');
-    console.log('|    2     |       Vote for Menu       |');
-    console.log('|    3     |       Provide feedback    |');
-    console.log('|    4     |       View Feedback       |');
-    console.log('|    5     |       View Notification   |');
-    console.log('|    6     |       Create your Profile |');
-    console.log('|    7     |       Logout\n            |');
+    console.log('|    1     | See menu                  |');
+    console.log('|    2     | Vote for Menu             |');
+    console.log('|    3     | Provide feedback          |');
+    console.log('|    4     | View Feedback             |');
+    console.log('|    5     | View Notification         |');
+    console.log('|    6     | Create your Profile       |');
+    console.log('|    7     | Enter discard item details|');
+    console.log('|    8     | Logout\n                  ');
     console.log('---------------------------------------');
 
     rl.question('Choose an option: ', option => {
@@ -39,6 +40,9 @@ export function employeeMenu(userId: string) {
                 makeProfile(userId);
                 break;
             case '7':
+                ownReceipe(userId);
+                break;
+            case '8':
                 logOut();
             default:
                 console.log('Invalid option');
@@ -114,6 +118,10 @@ export async function seeMenu(userId: string) {
     socket.emit('view_menu', { userId: userId });
 }
 
+function ownReceipe(userId: string) {
+    socket.emit('discardItems_list', { userId: userId })
+}
+ 
 //Prompt the user to vote for an item
 async function voteForItem(userId: string) {
     const itemId = await question('Enter Item Id that you want to vote:  ');
@@ -140,6 +148,22 @@ socket.on('viewNotification_response', data => {
     }
     employeeMenu(data.userID);
 });
+
+async function submitMomsRecipe(userId: string) {
+    const id = await question(
+        'Enter Id that you want to give moms recipe? ',
+    );
+    const dislikeReason = await question(
+        'What didn’t you like about <Food Item>? ',
+    );
+    const tasteExpectations = await question(
+        'How would you like <Food Item> to taste? ',
+    );
+    const message = await question(
+        'Share your mom’s recipe: ',
+    );
+    socket.emit('give_recipe', { userId: userId, id: id, dislikeReason: dislikeReason, tasteExpectations: tasteExpectations, message: message });
+}
 
 // Socket event handler for voting for menu response
 socket.on(
@@ -216,5 +240,40 @@ socket.on(
         } else {
             console.error('Feedback not submitted:', data);
         }
+    },
+);
+
+//Socket event handler for show discard response
+socket.on(
+    'discard_response',
+    (data: { success: boolean; discardList: any; userId: string }) => {
+        if (data.success) {
+            if (data.discardList) {
+                console.log(
+                    '-----------------Discard Table Data:---------------------',
+                );
+                console.table(data.discardList)
+                submitMomsRecipe(data.userId);
+            }
+        } else {
+            console.error('Failed to show the discard list', data);
+        }
+    },
+);
+
+//Socket event handler to give suggestion for discard item 
+socket.on(
+    'give_discard_response',
+    (data: { success: boolean; discardList: any; userId: string }) => {
+        if (data.success) {
+            if (data.discardList) {
+                console.log(
+                    'Thank you! Your suggestions has been submitted successfully  ',
+                );
+            }
+        } else {
+            console.error('Failed', data);
+        }
+        employeeMenu(data.userId)
     },
 );

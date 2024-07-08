@@ -52,7 +52,6 @@ function login() {
 
 // Emit a logout event
 export function logOut() {
-    console.log('inside');
     socket.emit('logout');
     rl.close();
 }

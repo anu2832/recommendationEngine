@@ -49,7 +49,7 @@ async function addItem(socket: Socket, data: MenuItem) {
     } catch (err) {
         socket.emit('add_item_response', {
             success: false,
-            message: err ,
+            message: err,
         });
         console.error('Database query error:', err);
     }
@@ -87,7 +87,11 @@ async function deleteItem(socket: Socket, data: any) {
 }
 
 // Function to update availability of a menu item
-async function updateItem(socket: Socket, itemId: string, availability: boolean) {
+async function updateItem(
+    socket: Socket,
+    itemId: string,
+    availability: boolean,
+) {
     try {
         const connection = await pool.getConnection();
         const [existingItems] = await connection.execute<RowDataPacket[]>(

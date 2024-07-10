@@ -22,9 +22,9 @@ export const handleChefEvents = (socket: Socket) => {
         await createDiscardList(socket, data);
     });
 
-    socket.on('modifyDiscardList',async data => {
-        await modifyDiscardList(socket,data)
-    })
+    socket.on('modifyDiscardList', async data => {
+        await modifyDiscardList(socket, data);
+    });
 
     socket.on('see_menu', async () => {
         await viewMenu(socket);
@@ -59,16 +59,15 @@ async function checkItemExists(socket: Socket, itemId: string) {
     }
 }
 
-export const modifyDiscardList = async (
-    socket: Socket,
-    data: any,
-) => {
-    const { choice,id } = data;
+export const modifyDiscardList = async (socket: Socket, data: any) => {
+    const { choice, id } = data;
     try {
- 
         const connection = await pool.getConnection();
-        const [discardResults] = await connection.execute<RowDataPacket[]>('SELECT * FROM discardItemList WHERE itemId = ?', [id]);
- 
+        const [discardResults] = await connection.execute<RowDataPacket[]>(
+            'SELECT * FROM discardItemList WHERE itemId = ?',
+            [id],
+        );
+
         if (discardResults.length === 0) {
             socket.emit('modify_discard_list_response', {
                 success: false,
@@ -76,22 +75,28 @@ export const modifyDiscardList = async (
             });
             return;
         }
- 
+
         if (choice === 'menu') {
             await connection.beginTransaction();
- 
-            await connection.execute('DELETE FROM discardItemList WHERE itemId = ?', [id]);
- 
+
+            await connection.execute(
+                'DELETE FROM discardItemList WHERE itemId = ?',
+                [id],
+            );
+
             await connection.execute('DELETE FROM menuitem WHERE id = ?', [id]);
- 
- 
+
             socket.emit('modify_discard_list_response', {
                 success: true,
-                message: 'Item successfully deleted from menu and discard list.',
+                message:
+                    'Item successfully deleted from menu and discard list.',
             });
         } else if (choice === 'discard') {
-            await connection.execute('DELETE FROM discardItemList WHERE itemId = ?', [id]);
- 
+            await connection.execute(
+                'DELETE FROM discardItemList WHERE itemId = ?',
+                [id],
+            );
+
             socket.emit('modify_discard_list_response', {
                 success: true,
                 message: 'Item successfully deleted from discard list.',
@@ -104,14 +109,13 @@ export const modifyDiscardList = async (
         }
     } catch (error) {
         console.error('Error modifying item:', error);
- 
+
         socket.emit('modify_discard_list_response', {
             success: false,
             message: 'Failed to modify item.',
         });
     }
-}
- 
+};
 
 // Function to create a rollout with top food items based on menu type
 async function createRollout(socket: Socket, data: any) {
@@ -131,10 +135,10 @@ async function createRollout(socket: Socket, data: any) {
             [currentDate, data.menuType],
         );
 
+        console.log(rolloutResults, '----------');
+
         if (rolloutResults.length > 0) {
-            console.log(
-                `RollOut menu is already created for ${data.menuType}`,
-            );
+            console.log(`RollOut menu is already created for ${data.menuType}`);
             socket.emit('get_recommendation_response', {
                 success: false,
                 message: `RollOut menu is already created for ${data.menuType}`,
@@ -143,7 +147,7 @@ async function createRollout(socket: Socket, data: any) {
             return;
         } else {
             const top5FoodItems = await getTopFoodItems(data.menuType);
-            await addNotification("Rollover is done.");
+            await addNotification('Rollover is done.');
         }
 
         socket.emit('create_rollout_response', {
@@ -241,13 +245,10 @@ async function createDiscardList(socket: Socket, data: any) {
         let lowerItem = await getTopFoodItems();
 
         if (!canProceed) {
-            console.log(
-                'You can only generate a discard list once a month.',
-            );
-            socket.emit('discard_response', {
+            console.log('You can only generate a discard list once a month.');
+            socket.emit('discard_response_chef', {
                 success: false,
-                message:
-                    'You can only generate a discard list once a month.',
+                message: 'You can only generate a discard list once a month.',
             });
             return;
         }
@@ -255,13 +256,10 @@ async function createDiscardList(socket: Socket, data: any) {
         lowerItem = lowerItem.filter(item => item.averageRating < 2);
 
         if (lowerItem.length === 0) {
-            console.log(
-                'No items with an average rating less than 2 found.',
-            );
-            socket.emit('discard_response', {
+            console.log('No items with an average rating less than 2 found.');
+            socket.emit('discard_response_chef', {
                 success: false,
-                message:
-                    'No items with an average rating less than 2 found.',
+                message: 'No items with an average rating less than 2 found.',
             });
             return;
         }
@@ -282,14 +280,14 @@ async function createDiscardList(socket: Socket, data: any) {
         }
 
         console.log('Discard list generated successfully.');
-        socket.emit('discard_response', {
+        socket.emit('discard_response_chef', {
             success: true,
             message: 'Discard list generated successfully.',
             discardItems: lowerItem,
         });
     } catch (error) {
         console.error('Error in discard list making:', error);
-        socket.emit('discard_response', {
+        socket.emit('discard_response_chef', {
             success: false,
             message: 'Error in discard list making.',
         });
@@ -300,9 +298,7 @@ async function createDiscardList(socket: Socket, data: any) {
 async function viewMenu(socket: Socket) {
     try {
         const connection = await pool.getConnection();
-        const [results] = await connection.execute(
-            'SELECT * FROM menuItem',
-        );
+        const [results] = await connection.execute('SELECT * FROM menuItem');
         connection.release();
         socket.emit('see_menu_response', { success: true, menu: results });
     } catch (err) {
@@ -318,9 +314,7 @@ async function viewMenu(socket: Socket) {
 async function viewFeedback(socket: Socket) {
     try {
         const connection = await pool.getConnection();
-        const [results] = await connection.execute(
-            'SELECT * FROM feedBack',
-        );
+        const [results] = await connection.execute('SELECT * FROM feedBack');
         console.log('results--->', results);
         connection.release();
 

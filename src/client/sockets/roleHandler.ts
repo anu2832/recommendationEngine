@@ -1,23 +1,22 @@
-import { adminMenu } from './adminHandler';
-import { displayUserPortal } from './authHandler';
-import { chefMenu } from './chefHandler';
-import { employeeMenu } from './employeeHandler';
+import { AdminMenu } from './Admin/AdminMenu';
+import chefMenuInstance from './Chef/ChefMenu';
+import EmployeeMenuInstance from './Employee/EmployeeMenu';
+import { UserPortal } from './auth/userPortal';
 
-//Manage activities based on user role.
 export function manageRoleActivities(role: string, userId: string) {
     console.log(`\nWelcome, ${role}`);
     switch (role) {
         case 'admin':
-            adminMenu();
+            AdminMenu.display();
             break;
         case 'employee':
-            employeeMenu(userId);
+            EmployeeMenuInstance(userId).employeeMenu(userId);
             break;
         case 'chef':
-            chefMenu();
+            chefMenuInstance.init();
             break;
         default:
             console.log('No operations defined for this role.');
-            displayUserPortal();
+            UserPortal.display();
     }
 }

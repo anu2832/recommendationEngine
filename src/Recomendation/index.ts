@@ -35,6 +35,7 @@ export async function getTopFoodItems(menuType?: string): Promise<any[]> {
                 foodDetails.price,
                 menuType,
             );
+            console.log(foodDetails);
         }
     }
 

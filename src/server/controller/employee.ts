@@ -25,6 +25,7 @@ export const handleEmployeeEvents = (socket: Socket) => {
     });
 
     socket.on('rolloutMenu', async data => {
+        console.log('server');
         await viewRolloutMenu(socket, data);
     });
 
@@ -87,9 +88,7 @@ async function viewMenu(socket: Socket, data: any) {
     const { userId } = data;
     try {
         const connection = await pool.getConnection();
-        const [results] = await connection.execute(
-            'SELECT * FROM menuitem',
-        );
+        const [results] = await connection.execute('SELECT * FROM menuitem');
         connection.release();
 
         socket.emit('view_menu_response', {
@@ -109,10 +108,9 @@ async function viewMenu(socket: Socket, data: any) {
 // Function to view feedbacks
 async function viewFeedbacks(socket: Socket) {
     try {
+        console.log('clicked on feedback');
         const connection = await pool.getConnection();
-        const [results] = await connection.execute(
-            'SELECT * FROM feedBack',
-        );
+        const [results] = await connection.execute('SELECT * FROM feedBack');
         connection.release();
 
         socket.emit('view_feedbacks_response', {
@@ -131,6 +129,7 @@ async function viewFeedbacks(socket: Socket) {
 // Function to view the rollout menu items
 async function viewRolloutMenu(socket: Socket, data: any) {
     const { userId } = data;
+    console.log(userId);
     let connection;
     try {
         connection = await pool.getConnection();
@@ -140,9 +139,10 @@ async function viewRolloutMenu(socket: Socket, data: any) {
             'SELECT * FROM userInformation WHERE userId = ?',
             [userId],
         );
+        console.log(userProfileResults);
 
         if (userProfileResults.length === 0) {
-            socket.emit('view_rollout_response', {
+            socket.emit('rollout_response', {
                 success: false,
                 message: 'User profile not found',
             });
@@ -158,8 +158,13 @@ async function viewRolloutMenu(socket: Socket, data: any) {
              JOIN menuitem m ON r.itemId = m.itemId`,
         );
 
+        console.log(rolloutResults, '------------');
+
         // Sort rollout items based on user profile
-        const sortedRolloutItems = sortRolloutItems(rolloutResults, userProfile);
+        const sortedRolloutItems = sortRolloutItems(
+            rolloutResults,
+            userProfile,
+        );
 
         connection.release();
 
@@ -169,10 +174,12 @@ async function viewRolloutMenu(socket: Socket, data: any) {
             userId,
         });
     } catch (err) {
+        console.log(err);
         if (connection) connection.release();
         socket.emit('rollout_response', {
             success: false,
             message: 'Database error',
+            userId: userId,
         });
         console.error('Database query error', err);
     }
@@ -181,6 +188,7 @@ async function viewRolloutMenu(socket: Socket, data: any) {
 // Function to vote for a menu item
 async function voteForMenu(socket: Socket, data: any) {
     const { userId, itemId } = data;
+    console.log('vote for menu ');
     try {
         const connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -225,12 +233,12 @@ async function voteForMenu(socket: Socket, data: any) {
 }
 
 function generateRandomItemId(): number {
-    return Math.floor(Math.random() * 1000); 
+    return Math.floor(Math.random() * 1000);
 }
 
 // Function to give feedback on a menu item
 async function giveFeedback(socket: Socket, data: any) {
-    const { message, userId, rating, mealType , itemId} = data;
+    const { message, userId, rating, mealType, itemId } = data;
 
     try {
         const connection = await pool.getConnection();
@@ -336,7 +344,9 @@ async function viewNotification(socket: Socket, data: any) {
     const { userId } = data;
     try {
         const lastNotificationId = await getLastNotificationId(userId);
-        const notifications = await getNotifications(lastNotificationId ?? undefined);
+        const notifications = await getNotifications(
+            lastNotificationId ?? undefined,
+        );
 
         const connection = await pool.getConnection();
         if (notifications.length > 0) {
@@ -362,16 +372,28 @@ async function viewNotification(socket: Socket, data: any) {
 // Function to sort rollout items based on user profile
 function sortRolloutItems(rolloutResults: RowDataPacket[], userProfile: any) {
     return rolloutResults.sort((a, b) => {
-        if (a.diet_category === userProfile.diet_category && b.diet_category !== userProfile.diet_category) {
+        if (
+            a.diet_category === userProfile.diet_category &&
+            b.diet_category !== userProfile.diet_category
+        ) {
             return -1;
         }
-        if (a.diet_category !== userProfile.diet_category && b.diet_category === userProfile.diet_category) {
+        if (
+            a.diet_category !== userProfile.diet_category &&
+            b.diet_category === userProfile.diet_category
+        ) {
             return 1;
         }
-        if (a.spice_level === userProfile.spice_level && b.spice_level !== userProfile.spice_level) {
+        if (
+            a.spice_level === userProfile.spice_level &&
+            b.spice_level !== userProfile.spice_level
+        ) {
             return -1;
         }
-        if (a.spice_level !== userProfile.spice_level && b.spice_level === userProfile.spice_level) {
+        if (
+            a.spice_level !== userProfile.spice_level &&
+            b.spice_level === userProfile.spice_level
+        ) {
             return 1;
         }
         if (a.area === userProfile.area && b.area !== userProfile.area) {
@@ -380,10 +402,16 @@ function sortRolloutItems(rolloutResults: RowDataPacket[], userProfile: any) {
         if (a.area !== userProfile.area && b.area === userProfile.area) {
             return 1;
         }
-        if (a.sweet_level === userProfile.sweet_level && b.sweet_level !== userProfile.sweet_level) {
+        if (
+            a.sweet_level === userProfile.sweet_level &&
+            b.sweet_level !== userProfile.sweet_level
+        ) {
             return -1;
         }
-        if (a.sweet_level !== userProfile.sweet_level && b.sweet_level === userProfile.sweet_level) {
+        if (
+            a.sweet_level !== userProfile.sweet_level &&
+            b.sweet_level === userProfile.sweet_level
+        ) {
             return 1;
         }
 
@@ -410,7 +438,10 @@ async function getLastNotificationId(userId: number): Promise<number | null> {
 }
 
 // Function to update the last notification ID for a user
-async function updateLastNotificationId(userId: number, notificationId: number) {
+async function updateLastNotificationId(
+    userId: number,
+    notificationId: number,
+) {
     const connection = await pool.getConnection();
     try {
         const [rows] = await connection.execute<RowDataPacket[]>(
@@ -458,17 +489,18 @@ export async function getNotifications(sinceNotificationId?: number) {
 //func to give your own receipe
 export const giveOwnRecipe = async (socket: Socket, data: any) => {
     const { id, dislikeReason, tasteExpectations, message } = data;
- 
+
     try {
         const connection = await pool.getConnection();
- 
+
         const [discardResults] = await connection.execute<RowDataPacket[]>(
             `SELECT d.*, m.itemName AS itemName, m.mealType
              FROM discardItemList d
              JOIN menuitem m ON d.itemId = m.itemId
-             WHERE d.itemId = ?`, [id]
+             WHERE d.itemId = ?`,
+            [id],
         );
- 
+
         if (discardResults.length <= 0) {
             connection.release();
             socket.emit('give_discard_response', {
@@ -477,21 +509,17 @@ export const giveOwnRecipe = async (socket: Socket, data: any) => {
             });
             return;
         }
- 
+
         await connection.execute(
             `INSERT INTO discardItemFeedback (itemId, itemConcern, tastePreference, ownReceipe) VALUES (?, ?, ?, ?)`,
-            [
-                id,
-                dislikeReason,
-                tasteExpectations,
-                message
-            ]
+            [id, dislikeReason, tasteExpectations, message],
         );
         connection.release();
- 
+
         socket.emit('give_discard_response', {
             success: true,
-            message: 'Message, feedback, and rating stored in feedback table successfully',
+            message:
+                'Message, feedback, and rating stored in feedback table successfully',
             discardList: discardResults,
         });
     } catch (err) {
@@ -510,22 +538,22 @@ export const seeDiscardList = async (socket: Socket, data: any) => {
         const [results] = await connection.execute<RowDataPacket[]>(
             `SELECT d.*, m.itemName AS itemName
              FROM discardItemList d
-             JOIN menuitem m ON d.itemId = m.itemId`
+             JOIN menuitem m ON d.itemId = m.itemId`,
         );
         connection.release();
- 
+
         if (results.length <= 0) {
             socket.emit('discard_response', {
                 success: true,
                 discardList: results,
-                userId: data.userId
+                userId: data.userId,
             });
         }
- 
+
         socket.emit('discard_response', {
             success: true,
             discardList: results,
-            userId: data.userId
+            userId: data.userId,
         });
     } catch (err) {
         socket.emit('discard_response', {

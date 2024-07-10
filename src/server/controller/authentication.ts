@@ -84,7 +84,9 @@ export const handleAuthEvents = (socket: Socket) => {
 
     // Function to handle user logout
     function handleLogout(socket: Socket) {
-        const userId = Array.from(userSockets.entries()).find(([_, sock]) => sock === socket)?.[0];
+        const userId = Array.from(userSockets.entries()).find(
+            ([_, sock]) => sock === socket,
+        )?.[0];
         if (userId) {
             userActivity(userId, 'logout'); // Log user logout activity
             console.log(`User logged out: ${userId}`); // Log user logout message
@@ -96,7 +98,10 @@ export const handleAuthEvents = (socket: Socket) => {
 
     // Function to log user activity
     async function userActivity(userId: string, action: string) {
-        const dateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        const dateTime = new Date()
+            .toISOString()
+            .slice(0, 19)
+            .replace('T', ' ');
         try {
             const connection = await pool.getConnection();
             await connection.execute(

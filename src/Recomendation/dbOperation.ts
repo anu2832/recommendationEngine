@@ -49,10 +49,12 @@ export class DatabaseService {
             'INSERT INTO rollover (itemId, itemName, price, mealTime, vote, rolloverCreationTime) VALUES (?, ?, ?, ?, ?, ?)',
             [foodId, name, price, mealType, 0, currentDate],
         );
+        console.log(foodId, '------>');
         connection.release();
     }
 
     async fetchFoodDetails(foodId: string): Promise<any> {
+        console.log(foodId, '---------->>>');
         const connection = await pool.getConnection();
         const [results] = await connection.execute<RowDataPacket[]>(
             'SELECT * FROM menuItem WHERE itemId = ?',

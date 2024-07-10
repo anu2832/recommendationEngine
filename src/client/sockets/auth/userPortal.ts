@@ -3,10 +3,7 @@ import { socket } from '../../../utils/socket';
 import { UserAuth } from './userAuth';
 
 export class UserPortal {
-    constructor() {
-        this.setUpSocketHandlers();
-    }
-
+   
     static display() {
         console.log('\nUser Portal:');
         console.log('---------------------------------------');
@@ -41,7 +38,6 @@ export class UserPortal {
         });
     }
 
-    private setUpSocketHandlers() {}
 }
 
 socket.on(

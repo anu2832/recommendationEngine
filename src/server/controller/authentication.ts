@@ -1,25 +1,23 @@
 import { Socket } from 'socket.io';
 import { rl } from '../../utils/rl';
 import { pool } from '../../Db/db';
-import { RowDataPacket } from 'mysql2';
-
+import { PoolConnection, RowDataPacket } from 'mysql2/promise';
+import { getConnection } from '../../utils/databaseHander';
 const userSockets = new Map<string, Socket>();
 
 // Handle authentication and user registration events.
 export const handleAuthEvents = (socket: Socket) => {
-    socket.on('authenticate', data => authenticateUser(socket, data));
+    getConnection()
+    .then(connection => {
+    socket.on('authenticate', data => authenticateUser(socket,connection, data));
+    socket.on('register', data => registerUser(socket,connection, data));
+    socket.on('user_connected', userId => handleUserConnected(socket,connection, userId));
+    socket.on('logout', () => handleLogout(socket,connection));
+    })
 
-    // Event: Register new user
-    socket.on('register', data => registerUser(socket, data));
-
-    // Event: Track user connection
-    socket.on('user_connected', userId => handleUserConnected(socket, userId));
-
-    // Event: User logout
-    socket.on('logout', () => handleLogout(socket));
 
     // Function to authenticate user
-    async function authenticateUser(socket: Socket, data: any) {
+    async function authenticateUser(socket: Socket,connection:PoolConnection, data: any) {
         const { employeeId, name } = data;
         try {
             const connection = await pool.getConnection();
@@ -36,7 +34,7 @@ export const handleAuthEvents = (socket: Socket) => {
                     role: user.role,
                     userID: employeeId,
                 });
-                userActivity(employeeId, 'logout');
+                userActivity(employeeId, 'login');
             } else {
                 socket.emit('auth_response', {
                     success: false,
@@ -53,7 +51,7 @@ export const handleAuthEvents = (socket: Socket) => {
     }
 
     // Function to register new user
-    async function registerUser(socket: Socket, data: any) {
+    async function registerUser(socket: Socket,connection:PoolConnection, data: any) {
         const { employeeId, name, role } = data;
         try {
             const connection = await pool.getConnection();
@@ -77,22 +75,22 @@ export const handleAuthEvents = (socket: Socket) => {
     }
 
     // Function to handle user connection
-    function handleUserConnected(socket: Socket, userId: string) {
+    function handleUserConnected(socket: Socket,connection:PoolConnection, userId: string) {
         console.log(userId); // Log the connected user ID
         userSockets.set(userId, socket); // Store user socket in the map
     }
 
     // Function to handle user logout
-    function handleLogout(socket: Socket) {
+    function handleLogout(socket: Socket,connection:PoolConnection,) {
         const userId = Array.from(userSockets.entries()).find(
             ([_, sock]) => sock === socket,
         )?.[0];
         if (userId) {
-            userActivity(userId, 'logout'); // Log user logout activity
-            console.log(`User logged out: ${userId}`); // Log user logout message
-            userSockets.delete(userId); // Remove user socket from the map
-            rl.close(); // Close readline interface
-            socket.disconnect(); // Disconnect socket
+            userActivity(userId, 'logout'); 
+            console.log(`User logged out: ${userId}`); 
+            userSockets.delete(userId); 
+            rl.close(); 
+            socket.disconnect(); 
         }
     }
 

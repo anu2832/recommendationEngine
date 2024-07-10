@@ -81,7 +81,7 @@ export class ChefMenuHandlers {
         } else {
             console.log('Failed to rollout: ' + data.message);
         }
-        this.parent.init();
+        this.parent.chefMenu();
     }
 
     private handleMenuResponse(data: any) {
@@ -90,7 +90,7 @@ export class ChefMenuHandlers {
         } else {
             console.error(data.message);
         }
-        this.parent.init();
+        this.parent.chefMenu();
     }
 
     private handleFeedbackResponse(data: any) {
@@ -99,7 +99,7 @@ export class ChefMenuHandlers {
         } else {
             console.log('Failed to retrieve feedbacks: ' + data.message);
         }
-        this.parent.init();
+        this.parent.chefMenu();
     }
 
     private handleDiscardResponse(data: any) {
@@ -109,7 +109,7 @@ export class ChefMenuHandlers {
         } else {
             console.log('Failed to create Discard List: ' + data.message);
         }
-        this.parent.init();
+        this.parent.chefMenu();
     }
 
     private handleFinalizedMenuResponse(data: any) {
@@ -118,7 +118,7 @@ export class ChefMenuHandlers {
         } else {
             console.log('Failed to show finalized menu: ' + data.message);
         }
-        this.parent.init();
+        this.parent.chefMenu();
     }
 
     private handleRecommendationResponse(data: any) {
@@ -127,11 +127,11 @@ export class ChefMenuHandlers {
         } else {
             console.log('Failed to show the rolledOver menu: ' + data.message);
         }
-        this.parent.init();
+        this.parent.chefMenu();
     }
 
     private handleModifyDiscardListResponse(data: any) {
         console.log(data.message);
-        this.parent.init();
+        this.parent.chefMenu();
     }
 }

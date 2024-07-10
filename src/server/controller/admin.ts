@@ -1,44 +1,37 @@
 import { Socket } from 'socket.io';
 import { MenuItem } from '../../models/menuItem';
 import { addNotification } from './addNotification';
-import { pool } from '../../Db/db';
-import { RowDataPacket } from 'mysql2';
+import { PoolConnection, RowDataPacket } from 'mysql2/promise';
+import { getConnection } from '../../utils/databaseHander';
 
 // Handle admin-specific socket events
 export const handleAdminEvents = (socket: Socket) => {
-    // Event listener for adding a menu item
-    socket.on('add_item', async (data: MenuItem) => {
-        await addItem(socket, data);
-    });
-
-    // Event listener for deleting a menu item
-    socket.on('delete_item', async (data: any) => {
-        await deleteItem(socket, data);
-    });
-
-    // Event listener for updating availability of a menu item
-    socket.on('update_item', async ({ itemId, availability }) => {
-        await updateItem(socket, itemId, availability);
-    });
+    getConnection()
+        .then(connection => {
+            socket.on('add_item', async (data: MenuItem) => await addItem(socket, connection, data));
+            socket.on('delete_item', async (data: any) => await deleteItem(socket, connection, data));
+            socket.on('update_item', async ({ itemId, availability }) => await updateItem(socket, connection, itemId, availability));
+        })
+        .catch(err => {
+            console.error('Error getting connection from pool:', err);
+        });
 };
 
-// Function to add a new menu item
-async function addItem(socket: Socket, data: MenuItem) {
+async function addItem(socket: Socket, connection: PoolConnection, data: MenuItem) {
     try {
-        const connection = await pool.getConnection();
         const [results] = await connection.execute(
             'INSERT INTO menuitem (itemId, itemName, price, mealType, availability, diet_category, spice_level, sweet_level, area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 data.id,
                 data.name,
                 data.price,
-                data.availability,
                 data.mealTime,
+                data.availability,
                 data.diet_category,
                 data.spice_level,
                 data.sweetDish,
                 data.area,
-            ],
+            ]
         );
         connection.release();
         socket.emit('add_item_response', {
@@ -55,14 +48,12 @@ async function addItem(socket: Socket, data: MenuItem) {
     }
 }
 
-// Function to delete a menu item
-async function deleteItem(socket: Socket, data: any) {
+async function deleteItem(socket: Socket, connection: PoolConnection, data: any) {
     const { itemId } = data;
     try {
-        const connection = await pool.getConnection();
         const [results] = await connection.execute(
             'DELETE FROM menuItem WHERE itemId = ?',
-            [itemId],
+            [itemId]
         );
         connection.release();
 
@@ -86,17 +77,11 @@ async function deleteItem(socket: Socket, data: any) {
     }
 }
 
-// Function to update availability of a menu item
-async function updateItem(
-    socket: Socket,
-    itemId: string,
-    availability: boolean,
-) {
+async function updateItem(socket: Socket, connection: PoolConnection, itemId: string, availability: boolean) {
     try {
-        const connection = await pool.getConnection();
         const [existingItems] = await connection.execute<RowDataPacket[]>(
             'SELECT * FROM menuitem WHERE itemId = ?',
-            [itemId],
+            [itemId]
         );
         if (existingItems.length === 0) {
             connection.release();
@@ -108,7 +93,7 @@ async function updateItem(
         }
         await connection.execute(
             'UPDATE menuitem SET availability = ? WHERE itemId = ?',
-            [availability, itemId],
+            [availability, itemId]
         );
         connection.release();
         socket.emit('update_item_response', { success: true });

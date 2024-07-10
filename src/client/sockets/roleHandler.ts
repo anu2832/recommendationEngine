@@ -13,7 +13,7 @@ export function manageRoleActivities(role: string, userId: string) {
             EmployeeMenuInstance(userId).employeeMenu(userId);
             break;
         case 'chef':
-            chefMenuInstance.init();
+            chefMenuInstance.chefMenu();
             break;
         default:
             console.log('No operations defined for this role.');

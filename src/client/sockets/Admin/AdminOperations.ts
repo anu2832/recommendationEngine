@@ -8,7 +8,7 @@ class AdminOperations {
         this.itemOperations = new ItemOperations();
     }
 
-    modifyMenu() {
+    public modifyMenu() {
         console.log('Modify Menu:');
         console.log('---------------------------------------');
         console.log('|  Option  |       Description         |');

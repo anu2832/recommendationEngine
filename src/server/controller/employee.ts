@@ -1,23 +1,27 @@
 import { Socket } from 'socket.io';
 import { RowDataPacket } from 'mysql2/promise';
 import { pool } from '../../Db/db';
+import { PoolConnection } from 'mysql2/typings/mysql/lib/PoolConnection';
+import { getConnection } from '../../utils/databaseHander';
 
 // Handle events related to employee actions
 export const handleEmployeeEvents = (socket: Socket) => {
+    getConnection()
+        .then((connection: any) => {
     socket.on('create_profile', async data => {
-        await createProfile(socket, data);
+        await createProfile(socket,connection, data);
     });
 
     socket.on('give_recipe', async data => {
-        await giveOwnRecipe(socket, data);
+        await giveOwnRecipe(socket,connection, data);
     });
 
     socket.on('discardItems_list', async data => {
-        await seeDiscardList(socket, data);
+        await seeDiscardList(socket,connection, data);
     });
 
     socket.on('view_menu', async data => {
-        await viewMenu(socket, data);
+        await viewMenu(socket,connection, data);
     });
 
     socket.on('view_feedbacks', async () => {
@@ -44,10 +48,14 @@ export const handleEmployeeEvents = (socket: Socket) => {
     socket.on('viewNotification', async data => {
         await viewNotification(socket, data);
     });
+})
+.catch((err: any) => {
+    console.error('Error getting connection from pool:', err);
+});
 };
 
 // Function to create or update a user profile
-async function createProfile(socket: Socket, data: any) {
+async function createProfile(socket: Socket,connection: PoolConnection, data: any) {
     const { userId, diet_category, spice_level, area, sweet_level } = data;
     try {
         const connection = await pool.getConnection();
@@ -84,7 +92,7 @@ async function createProfile(socket: Socket, data: any) {
 }
 
 // Function to view the menu items
-async function viewMenu(socket: Socket, data: any) {
+async function viewMenu(socket: Socket, connection: PoolConnection,data: any) {
     const { userId } = data;
     try {
         const connection = await pool.getConnection();
@@ -487,7 +495,7 @@ export async function getNotifications(sinceNotificationId?: number) {
 }
 
 //func to give your own receipe
-export const giveOwnRecipe = async (socket: Socket, data: any) => {
+export const giveOwnRecipe = async (socket: Socket,connection: PoolConnection, data: any) => {
     const { id, dislikeReason, tasteExpectations, message } = data;
 
     try {
@@ -532,7 +540,7 @@ export const giveOwnRecipe = async (socket: Socket, data: any) => {
 };
 
 // func to view discard list
-export const seeDiscardList = async (socket: Socket, data: any) => {
+export const seeDiscardList = async (socket: Socket,connection: PoolConnection, data: any) => {
     try {
         const connection = await pool.getConnection();
         const [results] = await connection.execute<RowDataPacket[]>(

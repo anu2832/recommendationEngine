@@ -9,7 +9,7 @@ export class ChefMenu {
         this.handlers = new ChefMenuHandlers(this);
     }
 
-    public init() {
+    public chefMenu() {
         console.log('Chef operations:');
         console.log('---------------------------------------');
         console.log('|  Option  |       Description         |');
@@ -48,7 +48,7 @@ export class ChefMenu {
                     break;
                 default:
                     console.log('Invalid option');
-                    this.init();
+                    this.chefMenu();
             }
         });
     }

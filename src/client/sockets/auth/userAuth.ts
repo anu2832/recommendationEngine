@@ -1,6 +1,6 @@
 import { rl } from '../../../utils/rl';
 import { socket } from '../../../utils/socket';
-import { manageRoleActivities } from '../roleHandler';
+import { manageRoleActivities } from '../RoleManager';
 import { UserPortal } from './userPortal';
 
 export class UserAuth {

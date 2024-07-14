@@ -1,8 +1,8 @@
 // import { Socket } from 'socket.io';
 // import { RowDataPacket } from 'mysql2/promise';
-// import { pool } from '../../Db/db';
 // import { PoolConnection } from 'mysql2/typings/mysql/lib/PoolConnection';
-// import { getConnection } from '../../utils/databaseHander';
+// import { pool } from '../../../Db/db';
+// import { getConnection } from '../../../utils/databaseHandler';
 
 // // Handle events related to employee actions
 // export const handleEmployeeEvents = (socket: Socket) => {
@@ -476,6 +476,7 @@
 // // Function to get notifications
 // export async function getNotifications(sinceNotificationId?: number) {
 //     const connection = await pool.getConnection();
+//     console.log(sinceNotificationId,"")
 //     try {
 //         if (sinceNotificationId) {
 //             const [results] = await connection.execute<RowDataPacket[]>(
@@ -496,7 +497,7 @@
 
 // //func to give your own receipe
 // export const giveOwnRecipe = async (socket: Socket,connection: PoolConnection, data: any) => {
-//     const { id, dislikeReason, tasteExpectations, message } = data;
+//     const { id, dislikeReason, tasteExpectations, message } = data; 
 
 //     try {
 //         const connection = await pool.getConnection();
@@ -571,3 +572,387 @@
 //         console.error('Database query error', err);
 //     }
 // };
+
+
+
+
+
+
+
+// // import { Socket } from 'socket.io';
+// // import { RowDataPacket } from 'mysql2/promise';
+// // import { pool } from '../../Db/db';
+// // import { PoolConnection } from 'mysql2/typings/mysql/lib/PoolConnection';
+// // import { getConnection } from '../../utils/databaseHandler';
+
+// // // EmployeeEventHandler class
+// // class EmployeeEventHandler {
+// //     private socket: Socket;
+// //     private connection: PoolConnection;
+
+// //     constructor(socket: Socket, connection: PoolConnection) {
+// //         this.socket = socket;
+// //         this.connection = connection;
+// //         this.registerEvents();
+// //     }
+
+// //     private registerEvents() {
+// //         this.socket.on('create_profile', this.createProfile.bind(this));
+// //         this.socket.on('give_recipe', this.giveOwnRecipe.bind(this));
+// //         this.socket.on('discardItems_list', this.seeDiscardList.bind(this));
+// //         this.socket.on('view_menu', this.viewMenu.bind(this));
+// //         this.socket.on('view_feedbacks', this.viewFeedbacks.bind(this));
+// //         this.socket.on('rolloutMenu', this.viewRolloutMenu.bind(this));
+// //         this.socket.on('vote_for_menu', this.voteForMenu.bind(this));
+// //         this.socket.on('give_feedBack', this.giveFeedback.bind(this));
+// //         this.socket.on('finalizedMenu', this.viewFinalizedMenu.bind(this));
+// //         this.socket.on('viewNotification', this.viewNotification.bind(this));
+// //     }
+
+// //     // Function to create or update a user profile
+// //     private async createProfile(data: any) {
+// //         const { userId, diet_category, spice_level, area, sweet_level } = data;
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             const [rows] = await connection.execute<RowDataPacket[]>(
+// //                 'SELECT * FROM userInformation WHERE userId = ?',
+// //                 [userId],
+// //             );
+
+// //             if (rows.length > 0) {
+// //                 await connection.execute(
+// //                     'UPDATE userInformation SET diet_category = ?, spice_level = ?, area = ?, sweet_level = ? WHERE userId = ?',
+// //                     [diet_category, spice_level, area, sweet_level, userId],
+// //                 );
+// //             } else {
+// //                 await connection.execute(
+// //                     'INSERT INTO userInformation (userId, diet_category, spice_level, area, sweet_level) VALUES (?, ?, ?, ?, ?)',
+// //                     [userId, diet_category, spice_level, sweet_level, area],
+// //                 );
+// //             }
+// //             connection.release();
+
+// //             this.socket.emit('create_profile_response', {
+// //                 success: true,
+// //                 message: 'Your profile has been created',
+// //                 result: data,
+// //             });
+// //         } catch (error) {
+// //             this.socket.emit('create_profile_response', {
+// //                 success: false,
+// //                 message: 'Your profile not created',
+// //             });
+// //             console.error('Database query error', error);
+// //         }
+// //     }
+
+// //     // Function to view the menu items
+// //     private async viewMenu(data: any) {
+// //         const { userId } = data;
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             const [results] = await connection.execute('SELECT * FROM menuitem');
+// //             connection.release();
+
+// //             this.socket.emit('view_menu_response', {
+// //                 success: true,
+// //                 menu: results,
+// //                 userId: userId,
+// //             });
+// //         } catch (err) {
+// //             this.socket.emit('view_menu_response', {
+// //                 success: false,
+// //                 message: 'Database error',
+// //             });
+// //             console.error('Database query error', err);
+// //         }
+// //     }
+
+// //     // Function to view feedbacks
+// //     private async viewFeedbacks() {
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             const [results] = await connection.execute('SELECT * FROM feedBack');
+// //             connection.release();
+
+// //             this.socket.emit('view_feedbacks_response', {
+// //                 success: true,
+// //                 feedbacks: results,
+// //             });
+// //         } catch (err) {
+// //             this.socket.emit('view_feedbacks_response', {
+// //                 success: false,
+// //                 message: 'Database error',
+// //             });
+// //             console.error('Database query error', err);
+// //         }
+// //     }
+
+// //     // Function to view the rollout menu items
+// //     private async viewRolloutMenu(data: any) {
+// //         const { userId } = data;
+// //         let connection;
+// //         try {
+// //             connection = await pool.getConnection();
+
+// //             // Fetch user profile
+// //             const [userProfileResults] = await connection.execute<RowDataPacket[]>(
+// //                 'SELECT * FROM userInformation WHERE userId = ?',
+// //                 [userId],
+// //             );
+
+// //             if (userProfileResults.length === 0) {
+// //                 this.socket.emit('rollout_response', {
+// //                     success: false,
+// //                     message: 'User profile not found',
+// //                 });
+// //                 return;
+// //             }
+
+// //             const userProfile = userProfileResults[0];
+
+// //             // Fetch rollout items with details from menuitem table
+// //             const [rolloutResults] = await connection.execute<RowDataPacket[]>(
+// //                 `SELECT r.*, m.diet_category, m.spice_level, m.area, m.sweet_level
+// //                 FROM rollover r
+// //                 JOIN menuitem m ON r.itemId = m.itemId`,
+// //             );
+
+// //             // Sort rollout items based on user profile
+// //             const sortedRolloutItems = this.sortRolloutItems(
+// //                 rolloutResults,
+// //                 userProfile,
+// //             );
+
+// //             connection.release();
+
+// //             this.socket.emit('rollout_response', {
+// //                 success: true,
+// //                 rollOutData: sortedRolloutItems,
+// //                 userId,
+// //             });
+// //         } catch (err) {
+// //             if (connection) connection.release();
+// //             this.socket.emit('rollout_response', {
+// //                 success: false,
+// //                 message: 'Database error',
+// //                 userId: userId,
+// //             });
+// //             console.error('Database query error', err);
+// //         }
+// //     }
+
+// //     // Function to vote for a menu item
+// //     private async voteForMenu(data: any) {
+// //         const { userId, itemId } = data;
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             await connection.beginTransaction();
+// //             const [userVotes] = await connection.execute<RowDataPacket[]>(
+// //                 'SELECT userId FROM votedUsers WHERE userId = ?',
+// //                 [userId],
+// //             );
+
+// //             if (userVotes.length > 0) {
+// //                 this.socket.emit('vote_for_menu_response', {
+// //                     success: false,
+// //                     userId: userId,
+// //                     message: 'You have already voted for an item.',
+// //                 });
+// //                 await connection.rollback();
+// //                 connection.release();
+// //                 return;
+// //             }
+
+// //             await connection.execute(
+// //                 'UPDATE rollover SET vote = vote + 1 WHERE itemId = ?',
+// //                 [itemId],
+// //             );
+// //             await connection.execute(
+// //                 'INSERT INTO votedUsers (userId, itemId) VALUES (?, ?)',
+// //                 [userId, itemId],
+// //             );
+// //             await connection.commit();
+// //             connection.release();
+
+// //             this.socket.emit('vote_for_menu_response', {
+// //                 success: true,
+// //                 message: 'Your vote has been recorded successfully.',
+// //             });
+// //         } catch (err) {
+// //             this.socket.emit('vote_for_menu_response', {
+// //                 success: false,
+// //                 message: 'Database error occurred.',
+// //             });
+// //             console.error('Database query error', err);
+// //         }
+// //     }
+
+// //     // Function to give feedback on a menu item
+// //     private async giveFeedback(data: any) {
+// //         const { message, userId, rating, mealType, itemId } = data;
+
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             const [rows] = await connection.execute<RowDataPacket[]>(
+// //                 'SELECT * FROM menuitem WHERE itemId = ?',
+// //                 [itemId],
+// //             );
+
+// //             // Check if menu item exists
+// //             if (rows.length === 0) {
+// //                 this.socket.emit('giveFeedback_response', {
+// //                     success: false,
+// //                     message: 'Menu item not found',
+// //                 });
+// //                 connection.release();
+// //                 return;
+// //             }
+
+// //             const menuItem = rows[0];
+
+// //             await connection.execute(
+// //                 'INSERT INTO feedBack (id, itemId, userName, itemName, message, rating, mealType) VALUES (?, ?, ?, ?, ?, ?, ?)',
+// //                 [
+// //                     this.generateRandomItemId(),
+// //                     menuItem.itemId,
+// //                     userId,
+// //                     menuItem.itemName,
+// //                     message,
+// //                     rating,
+// //                     mealType,
+// //                 ],
+// //             );
+
+// //             connection.release();
+
+// //             this.socket.emit('giveFeedback_response', {
+// //                 success: true,
+// //                 userId: userId,
+// //                 feedBack: rows,
+// //             });
+// //         } catch (err) {
+// //             this.socket.emit('giveFeedback_response', {
+// //                 success: false,
+// //                 message: 'Database error',
+// //             });
+// //             console.error('Database query error', err);
+// //         }
+// //     }
+
+// //     // Function to view the finalized menu items
+// //     private async viewFinalizedMenu(data: any) {
+// //         const { userId } = data;
+// //         const currentDate = new Date().toISOString().slice(0, 10); // Get the current date in 'YYYY-MM-DD' format
+
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             const [results] = await connection.execute<RowDataPacket[]>(
+// //                 'SELECT * FROM finalizedMenu WHERE preparedOn = ?',
+// //                 [currentDate],
+// //             );
+// //             connection.release();
+
+// //             this.socket.emit('show_finalList_response', {
+// //                 success: true,
+// //                 userId: userId,
+// //                 finalList: results,
+// //             });
+// //         } catch (err) {
+// //             this.socket.emit('show_finalList_response', {
+// //                 success: false,
+// //                 message: 'Database error',
+// //             });
+// //             console.error('Database query error', err);
+// //         }
+// //     }
+
+// //     // Function to view notifications
+// //     private async viewNotification(data: any) {
+// //         const { userId } = data;
+// //         try {
+// //             const lastNotificationId = await this.getLastNotificationId(userId);
+// //             const notifications = await this.getNotifications(lastNotificationId ?? undefined);
+
+// //             this.socket.emit('viewNotification_response', {
+// //                 success: true,
+// //                 notifications: notifications,
+// //             });
+// //         } catch (error) {
+// //             this.socket.emit('viewNotification_response', {
+// //                 success: false,
+// //                 message: 'Database error',
+// //             });
+// //             console.error('Database query error', error);
+// //         }
+// //     }
+
+// //     // Helper function to get the last notification ID viewed by the user
+// //     private async getLastNotificationId(userId: string): Promise<number | null> {
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             const [results] = await connection.execute<RowDataPacket[]>(
+// //                 'SELECT lastNotificationId FROM userNotifications WHERE userId = ?',
+// //                 [userId],
+// //             );
+// //             connection.release();
+
+// //             if (results.length > 0) {
+// //                 return results[0].lastNotificationId;
+// //             } else {
+// //                 return null;
+// //             }
+// //         } catch (error) {
+// //             console.error('Database query error', error);
+// //             return null;
+// //         }
+// //     }
+
+// //     // Helper function to get notifications from the database
+// //     private async getNotifications(lastNotificationId?: number): Promise<RowDataPacket[]> {
+// //         try {
+// //             const connection = await pool.getConnection();
+// //             let query = 'SELECT * FROM notifications';
+// //             let params: any[] = [];
+
+// //             if (lastNotificationId) {
+// //                 query += ' WHERE notificationId > ?';
+// //                 params.push(lastNotificationId);
+// //             }
+
+// //             const [results] = await connection.execute<RowDataPacket[]>(query, params);
+// //             connection.release();
+
+// //             return results;
+// //         } catch (error) {
+// //             console.error('Database query error', error);
+// //             return [];
+// //         }
+// //     }
+
+// //     // Function to generate a random item ID
+// //     private generateRandomItemId(): number {
+// //         const min = 100000; // Minimum value for 6 digits
+// //         const max = 999999; // Maximum value for 6 digits
+// //         const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+// //         return randomNumber;
+// //     }
+// // }
+
+// // async function handleEmployeeEvents(socket: Socket) {
+// //     let connection: PoolConnection | null = null;
+
+// //     try {
+// //         connection = await getConnection();
+
+// //         new EmployeeEventHandler(socket, connection);
+
+// //     } catch (error) {
+// //         if (connection) {
+// //             connection.release();
+// //         }
+// //         console.error('Error in handleEmployeeEvents:', error);
+// //     }
+// // }
+
+// // export { handleEmployeeEvents };

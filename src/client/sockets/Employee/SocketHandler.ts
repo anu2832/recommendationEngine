@@ -41,6 +41,10 @@ export class EmployeeMenuHandlers {
             'create_profile_response',
             this.handleCreateProfileResponse.bind(this),
         );
+        // socket.on(
+        //     'discardItems_list_response',
+        //     this.handleDiscardResponse.bind(this),
+        // );
     }
 
     public seeMenu(userId: string) {
@@ -87,6 +91,7 @@ export class EmployeeMenuHandlers {
     }
 
     public async ownRecipe(userId: string) {
+        console.log('hii ')
         socket.emit('discardItems_list', { userId });
     }
 
@@ -186,7 +191,7 @@ export class EmployeeMenuHandlers {
                 if (data.rollOutData.length > 0) {
                     this.parent.handlers.voteForItem(data.userId);
                 } else {
-                    console.log('there is no item in Roll over List');
+                    console.log('No Item For vote....');
                 }
             }
         } else {
@@ -207,8 +212,8 @@ export class EmployeeMenuHandlers {
     private handleDiscardResponse(data: any) {
         if (data.success) {
             console.log('Discard List');
-            console.table(data.discardList);
-            if (data.discardList.length > 0) {
+            console.table(data.discardedItems);
+            if (data.discardedItems.length > 0) {
                 this.parent.handlers.submitMomsRecipe(data.userId);
             } else {
                 console.log('Discard list is empty!');

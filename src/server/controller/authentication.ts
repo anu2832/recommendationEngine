@@ -15,7 +15,6 @@
 //     socket.on('logout', () => handleLogout(socket,connection));
 //     })
 
-
 //     // Function to authenticate user
 //     async function authenticateUser(socket: Socket,connection:PoolConnection, data: any) {
 //         const { employeeId, name } = data;
@@ -86,11 +85,11 @@
 //             ([_, sock]) => sock === socket,
 //         )?.[0];
 //         if (userId) {
-//             userActivity(userId, 'logout'); 
-//             console.log(`User logged out: ${userId}`); 
-//             userSockets.delete(userId); 
-//             rl.close(); 
-//             socket.disconnect(); 
+//             userActivity(userId, 'logout');
+//             console.log(`User logged out: ${userId}`);
+//             userSockets.delete(userId);
+//             rl.close();
+//             socket.disconnect();
 //         }
 //     }
 

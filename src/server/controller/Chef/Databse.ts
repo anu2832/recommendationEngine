@@ -1,8 +1,10 @@
 import { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
 
 export class Database {
-
-    public async checkItemExists(connection: PoolConnection, itemId: string): Promise<boolean> {
+    public async checkItemExists(
+        connection: PoolConnection,
+        itemId: string,
+    ): Promise<boolean> {
         const [results]: any = await connection.execute(
             'SELECT COUNT(*) as count FROM menuitem WHERE itemId = ?',
             [itemId],
@@ -10,7 +12,10 @@ export class Database {
         return results[0].count > 0;
     }
 
-    public async getDiscardItemList(connection: PoolConnection, id: string): Promise<any> {
+    public async getDiscardItemList(
+        connection: PoolConnection,
+        id: string,
+    ): Promise<any> {
         const [discardResults] = await connection.execute(
             'SELECT * FROM discardItemList WHERE itemId = ?',
             [id],
@@ -18,21 +23,28 @@ export class Database {
         return discardResults;
     }
 
-    public async deleteFromDiscardItemList(connection: PoolConnection, id: string): Promise<void> {
+    public async deleteFromDiscardItemList(
+        connection: PoolConnection,
+        id: string,
+    ): Promise<void> {
         await connection.execute(
             'DELETE FROM discardItemList WHERE itemId = ?',
             [id],
         );
     }
 
-    public async deleteFromMenuItem(connection: PoolConnection, id: string): Promise<void> {
-        await connection.execute(
-            'DELETE FROM menuitem WHERE itemId = ?',
-            [id],
-        );
+    public async deleteFromMenuItem(
+        connection: PoolConnection,
+        id: string,
+    ): Promise<void> {
+        await connection.execute('DELETE FROM menuitem WHERE itemId = ?', [id]);
     }
 
-    public async getRolloverItems(connection: PoolConnection, currentDate: string, menuType: string): Promise<any> {
+    public async getRolloverItems(
+        connection: PoolConnection,
+        currentDate: string,
+        menuType: string,
+    ): Promise<any> {
         const [rolloutResults] = await connection.execute(
             `SELECT r.*, m.diet_category, m.spice_level, m.area, m.sweet_level, m.mealType
              FROM rollover r
@@ -50,7 +62,11 @@ export class Database {
         return maxVoteItem;
     }
 
-    public async getFinalizedMenuItems(connection: PoolConnection, itemId: string, currentDate: string): Promise<any> {
+    public async getFinalizedMenuItems(
+        connection: PoolConnection,
+        itemId: string,
+        currentDate: string,
+    ): Promise<any> {
         const [existingFinalMenuItems] = await connection.execute(
             'SELECT * FROM finalizedMenu WHERE itemId = ? AND preparedOn = ?',
             [itemId, currentDate],
@@ -58,14 +74,24 @@ export class Database {
         return existingFinalMenuItems;
     }
 
-    public async insertIntoFinalizedMenu(connection: PoolConnection, itemId: string, itemName: string, currentDate: string): Promise<void> {
+    public async insertIntoFinalizedMenu(
+        connection: PoolConnection,
+        itemId: string,
+        itemName: string,
+        currentDate: string,
+    ): Promise<void> {
         await connection.execute(
             'INSERT INTO finalizedMenu (itemId, itemName, preparedOn) VALUES (?, ?, ?)',
             [itemId, itemName, currentDate],
         );
     }
 
-    public async insertIntoDiscardItemList(connection: PoolConnection, discardItemId: number, itemId: string, dateTime: string): Promise<void> {
+    public async insertIntoDiscardItemList(
+        connection: PoolConnection,
+        discardItemId: number,
+        itemId: string,
+        dateTime: string,
+    ): Promise<void> {
         await connection.execute(
             'INSERT INTO discardItemlist (discardItemId, itemId, Date) VALUES (?, ?, ?)',
             [discardItemId, itemId, dateTime],
@@ -82,7 +108,9 @@ export class Database {
         return results;
     }
 
-    public async getLatestDiscardedItem(connection: PoolConnection): Promise<any> {
+    public async getLatestDiscardedItem(
+        connection: PoolConnection,
+    ): Promise<any> {
         const [rows] = await connection.execute<RowDataPacket[]>(
             'SELECT * FROM discardItemList ORDER BY date DESC LIMIT 1',
         );

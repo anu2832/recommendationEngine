@@ -3,11 +3,11 @@ import { PoolConnection } from 'mysql2/promise';
 import { getTopFoodItems } from '../../../Recomendation';
 import { Database } from './Databse';
 import { getConnection } from '../../../utils/databaseHandler';
+import notificationManager from '../notification/notificationManager';
 
 export class ChefEvents {
     private db: Database;
     private connection: PoolConnection | null = null;
-    notificationManager: any;
 
     constructor(private socket: Socket) {
         this.db = new Database();
@@ -32,19 +32,19 @@ export class ChefEvents {
             await this.checkItemExists(itemId);
         });
 
-        this.socket.on('create_rollout', async (data) => {
+        this.socket.on('create_rollout', async data => {
             await this.createRollout(data);
         });
 
-        this.socket.on('selectedMenu', async (data) => {
+        this.socket.on('selectedMenu', async data => {
             await this.selectMenu(data);
         });
 
-        this.socket.on('allDiscardedItems', async (data) => {
+        this.socket.on('allDiscardedItems', async data => {
             await this.createDiscardList(data);
         });
 
-        this.socket.on('modifyDiscardList', async (data) => {
+        this.socket.on('modifyDiscardList', async data => {
             await this.modifyDiscardList(data);
         });
 
@@ -66,10 +66,19 @@ export class ChefEvents {
 
     private async checkItemExists(itemId: string) {
         try {
-            const exists = await this.db.checkItemExists(this.connection!, itemId);
-            this.socket.emit('check_item_exists_response', { success: true, exists });
+            const exists = await this.db.checkItemExists(
+                this.connection!,
+                itemId,
+            );
+            this.socket.emit('check_item_exists_response', {
+                success: true,
+                exists,
+            });
         } catch (err) {
-            this.socket.emit('check_item_exists_response', { success: false, message: 'Database error' });
+            this.socket.emit('check_item_exists_response', {
+                success: false,
+                message: 'Database error',
+            });
             console.error('Database query error', err);
         }
     }
@@ -77,7 +86,10 @@ export class ChefEvents {
     private async modifyDiscardList(data: any) {
         const { choice, id } = data;
         try {
-            const discardResults = await this.db.getDiscardItemList(this.connection!, id);
+            const discardResults = await this.db.getDiscardItemList(
+                this.connection!,
+                id,
+            );
 
             if (discardResults.length === 0) {
                 this.socket.emit('modify_discard_list_response', {
@@ -97,7 +109,8 @@ export class ChefEvents {
 
                 this.socket.emit('modify_discard_list_response', {
                     success: true,
-                    message: 'Item successfully deleted from menu and discard list.',
+                    message:
+                        'Item successfully deleted from menu and discard list.',
                 });
             } else if (choice === 'discard') {
                 await this.db.deleteFromDiscardItemList(this.connection!, id);
@@ -125,10 +138,16 @@ export class ChefEvents {
     private async createRollout(data: any) {
         try {
             const currentDate = new Date().toISOString().slice(0, 10);
-            const rolloutResults = await this.db.getRolloverItems(this.connection!, currentDate, data.menuType);
+            const rolloutResults = await this.db.getRolloverItems(
+                this.connection!,
+                currentDate,
+                data.menuType,
+            );
 
             if (rolloutResults.length > 0) {
-                console.log(`RollOut menu is already created for ${data.menuType}`);
+                console.log(
+                    `RollOut menu is already created for ${data.menuType}`,
+                );
                 this.socket.emit('get_recommendation_response', {
                     success: false,
                     message: `RollOut menu is already created for ${data.menuType}`,
@@ -137,7 +156,10 @@ export class ChefEvents {
                 return;
             } else {
                 const top5FoodItems = await getTopFoodItems(data.menuType);
-                await this.notificationManager.addNotification('Rollover is done.');
+                await notificationManager.addNotification(
+                    'New item added: ' + data.name,
+                );
+                console.log(top5FoodItems);
             }
 
             this.socket.emit('create_rollout_response', {
@@ -161,7 +183,12 @@ export class ChefEvents {
             if (maxVoteItem.length > 0) {
                 const { itemId, itemName, mealType } = maxVoteItem[0];
                 const currentDate = new Date().toISOString().slice(0, 10);
-                const existingFinalMenuItems = await this.db.getFinalizedMenuItems(this.connection!, itemId, currentDate);
+                const existingFinalMenuItems =
+                    await this.db.getFinalizedMenuItems(
+                        this.connection!,
+                        itemId,
+                        currentDate,
+                    );
 
                 if (existingFinalMenuItems.length > 0) {
                     console.log(
@@ -174,13 +201,18 @@ export class ChefEvents {
                     return;
                 }
 
-                await this.db.insertIntoFinalizedMenu(this.connection!, itemId, itemName, currentDate);
+                await this.db.insertIntoFinalizedMenu(
+                    this.connection!,
+                    itemId,
+                    itemName,
+                    currentDate,
+                );
 
                 console.log(
                     `Item '${itemName}' with ID '${itemId}' added to final_menu for date '${currentDate}'`,
                 );
 
-                await this.notificationManager.addNotification(
+                await notificationManager.addNotification(
                     `FinalMenu item: ${itemName} with ID ${itemId} added to final_menu for date ${currentDate}`,
                 );
 
@@ -210,10 +242,13 @@ export class ChefEvents {
             let lowerItem = await getTopFoodItems();
 
             if (!canProceed) {
-                console.log('You can only generate a discard list once a month.');
+                console.log(
+                    'You can only generate a discard list once a month.',
+                );
                 this.socket.emit('discard_response_chef', {
                     success: false,
-                    message: 'You can only generate a discard list once a month.',
+                    message:
+                        'You can only generate a discard list once a month.',
                 });
                 return;
             }
@@ -221,18 +256,29 @@ export class ChefEvents {
             lowerItem = lowerItem.filter(item => item.averageRating < 2);
 
             if (lowerItem.length === 0) {
-                console.log('No items with an average rating less than 2 found.');
+                console.log(
+                    'No items with an average rating less than 2 found.',
+                );
                 this.socket.emit('discard_response_chef', {
                     success: false,
-                    message: 'No items with an average rating less than 2 found.',
+                    message:
+                        'No items with an average rating less than 2 found.',
                 });
                 return;
             }
 
-            const dateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            const dateTime = new Date()
+                .toISOString()
+                .slice(0, 19)
+                .replace('T', ' ');
 
             for (const item of lowerItem) {
-                await this.db.insertIntoDiscardItemList(this.connection!, 0, item.foodId, dateTime);
+                await this.db.insertIntoDiscardItemList(
+                    this.connection!,
+                    0,
+                    item.foodId,
+                    dateTime,
+                );
                 await this.db.deleteFromMenuItem(this.connection!, item.foodId);
             }
 
@@ -254,7 +300,10 @@ export class ChefEvents {
     private async viewMenu() {
         try {
             const results = await this.db.getMenuItems(this.connection!);
-            this.socket.emit('see_menu_response', { success: true, menu: results });
+            this.socket.emit('see_menu_response', {
+                success: true,
+                menu: results,
+            });
         } catch (err) {
             this.socket.emit('see_menu_response', {
                 success: false,
@@ -283,7 +332,9 @@ export class ChefEvents {
     }
 
     private async canPerformOperation(): Promise<boolean> {
-        const lastDiscardedItem = await this.db.getLatestDiscardedItem(this.connection!);
+        const lastDiscardedItem = await this.db.getLatestDiscardedItem(
+            this.connection!,
+        );
         if (lastDiscardedItem) {
             if (this.isWithinLast30Days(lastDiscardedItem.date)) {
                 return false;

@@ -4,7 +4,6 @@
 // import { getConnection } from '../../utils/databaseHander';
 // import notificationManager from './notification/notificationManager';
 
-
 // // Handle admin-specific socket events
 // export const handleAdminEvents = (socket: Socket) => {
 //     getConnection()

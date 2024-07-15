@@ -1,28 +1,32 @@
 import { rl } from '../../../utils/rl';
 import { UserAuth } from '../auth/userAuth';
 import AdminOperationsInstance from './AdminOperations';
+import { ADMIN_CONSTANTS } from './Constant';
 
 export class AdminMenu {
     static display() {
-        console.log('\nAdmin Operations:');
-        console.log('---------------------------------------');
-        console.log('|  Option  |       Description         |');
-        console.log('---------------------------------------');
-        console.log('|    1     |       Modify Menu         |');
-        console.log('|    2     |         Logout            |');
-        console.log('---------------------------------------');
-        rl.question('Choose an option: ', (option: any) => {
-            switch (option) {
-                case '1':
-                    AdminOperationsInstance.modifyMenu();
-                    break;
-                case '2':
-                    UserAuth.logOut();
-                    break;
-                default:
-                    console.log('Invalid option');
-                    AdminMenu.display();
-            }
-        });
+        console.log(`\n${ADMIN_CONSTANTS.adminMenu.title}`);
+        console.log(ADMIN_CONSTANTS.adminMenu.separator);
+        ADMIN_CONSTANTS.adminMenu.options.forEach(option =>
+            console.log(option),
+        );
+        console.log(ADMIN_CONSTANTS.adminMenu.separator);
+
+        rl.question(
+            ADMIN_CONSTANTS.adminMenu.chooseOptionPrompt,
+            (option: string) => {
+                switch (option) {
+                    case '1':
+                        AdminOperationsInstance.modifyMenu();
+                        break;
+                    case '2':
+                        UserAuth.logOut();
+                        break;
+                    default:
+                        console.log(ADMIN_CONSTANTS.adminMenu.invalidOption);
+                        AdminMenu.display();
+                }
+            },
+        );
     }
 }

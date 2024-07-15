@@ -1,5 +1,5 @@
 import { AdminMenu } from './Admin/AdminMenu';
-import chefMenuInstance from './Chef/ChefMenu';
+import chefMenuInstance from './Chef/chefMenu';
 import EmployeeMenuInstance from './Employee/EmployeeMenu';
 import { UserPortal } from './auth/userPortal';
 

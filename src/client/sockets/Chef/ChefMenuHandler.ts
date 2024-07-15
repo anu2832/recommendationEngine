@@ -1,5 +1,6 @@
 import { question } from '../../../utils/rl';
 import { socket } from '../../../utils/socket';
+import { CHEF_MENU_CONSTANTS } from './constant';
 
 export class ChefMenuHandlers {
     private parent: any;
@@ -38,7 +39,9 @@ export class ChefMenuHandlers {
     }
 
     public async menuRollOut() {
-        const menuType = await question('Rolled Out menu:');
+        const menuType = await question(
+            CHEF_MENU_CONSTANTS.rolledOutMenuPrompt,
+        );
         socket.emit('create_rollout', { menuType });
     }
 
@@ -56,14 +59,16 @@ export class ChefMenuHandlers {
 
     public async modifyDiscardList() {
         const choice = await question(
-            'Do you want to delete item from menu or discard list? (menu/discard)',
+            CHEF_MENU_CONSTANTS.modifyDiscardList.choicePrompt,
         );
-        const id = await question('Enter the itemId for the above operation');
+        const id = await question(
+            CHEF_MENU_CONSTANTS.modifyDiscardList.idPrompt,
+        );
 
         if (choice === 'menu' || choice === 'discard') {
             socket.emit('modifyDiscardList', { choice, id });
         } else {
-            console.log(`Invalid choice, Please enter "menu" or "discard".`);
+            console.log(CHEF_MENU_CONSTANTS.modifyDiscardList.invalidChoice);
             await this.modifyDiscardList();
         }
     }
@@ -75,11 +80,17 @@ export class ChefMenuHandlers {
     private handleCreateRolloutResponse(data: any) {
         if (data.success) {
             if (data.rolledOutMenu) {
-                console.log(data.message);
+                console.log(
+                    CHEF_MENU_CONSTANTS.successMessages
+                        .handleCreateRolloutResponse,
+                );
                 console.table(data.rolledOutMenu);
             }
         } else {
-            console.log('Failed to rollout: ' + data.message);
+            console.log(
+                CHEF_MENU_CONSTANTS.failureMessages
+                    .handleCreateRolloutResponse + data.message,
+            );
         }
         this.parent.chefMenu();
     }
@@ -97,7 +108,10 @@ export class ChefMenuHandlers {
         if (data.success) {
             console.table(data.itemFeedback);
         } else {
-            console.log('Failed to retrieve feedbacks: ' + data.message);
+            console.log(
+                CHEF_MENU_CONSTANTS.failureMessages.handleFeedbackResponse +
+                    data.message,
+            );
         }
         this.parent.chefMenu();
     }
@@ -107,7 +121,10 @@ export class ChefMenuHandlers {
             console.table(data.message);
             console.log(data.discardItems);
         } else {
-            console.log('Failed to create Discard List: ' + data.message);
+            console.log(
+                CHEF_MENU_CONSTANTS.failureMessages.handleDiscardResponse +
+                    data.message,
+            );
         }
         this.parent.chefMenu();
     }
@@ -116,7 +133,10 @@ export class ChefMenuHandlers {
         if (data.success) {
             console.table(data.message);
         } else {
-            console.log('Failed to show finalized menu: ' + data.message);
+            console.log(
+                CHEF_MENU_CONSTANTS.failureMessages
+                    .handleFinalizedMenuResponse + data.message,
+            );
         }
         this.parent.chefMenu();
     }
@@ -125,7 +145,10 @@ export class ChefMenuHandlers {
         if (data.success) {
             console.table(data.message);
         } else {
-            console.log('Failed to show the rolledOver menu: ' + data.message);
+            console.log(
+                CHEF_MENU_CONSTANTS.failureMessages
+                    .handleRecommendationResponse + data.message,
+            );
         }
         this.parent.chefMenu();
     }

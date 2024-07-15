@@ -16,4 +16,3 @@ export const releaseConnection = () => {
         connection = null;
     }
 };
-

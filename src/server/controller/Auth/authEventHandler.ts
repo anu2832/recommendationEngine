@@ -24,7 +24,9 @@ export class AuthEventHandler {
     private initializeEvents() {
         this.socket.on('authenticate', data => this.authenticateUser(data));
         this.socket.on('register', data => this.registerUser(data));
-        this.socket.on('user_connected', userId => this.handleUserConnected(userId));
+        this.socket.on('user_connected', userId =>
+            this.handleUserConnected(userId),
+        );
         this.socket.on('logout', () => this.handleLogout());
     }
 

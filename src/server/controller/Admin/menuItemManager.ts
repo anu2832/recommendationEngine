@@ -3,7 +3,6 @@ import { PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { MenuItem } from '../../../models/menuItem';
 import notificationManager from '../notification/notificationManager';
 
-
 class MenuItemManager {
     async addItem(socket: Socket, connection: PoolConnection, data: MenuItem) {
         try {
@@ -19,14 +18,16 @@ class MenuItemManager {
                     data.spice_level,
                     data.sweetDish,
                     data.area,
-                ]
+                ],
             );
             connection.release();
             socket.emit('add_item_response', {
                 success: true,
                 message: 'Item added successfully',
             });
-            await notificationManager.addNotification('New item added: ' + data.name);
+            await notificationManager.addNotification(
+                'New item added: ' + data.name,
+            );
         } catch (err) {
             socket.emit('add_item_response', {
                 success: false,
@@ -41,7 +42,7 @@ class MenuItemManager {
         try {
             const [results] = await connection.execute(
                 'DELETE FROM menuItem WHERE itemId = ?',
-                [itemId]
+                [itemId],
             );
             connection.release();
 
@@ -65,11 +66,16 @@ class MenuItemManager {
         }
     }
 
-    async updateItem(socket: Socket, connection: PoolConnection, itemId: string, availability: boolean) {
+    async updateItem(
+        socket: Socket,
+        connection: PoolConnection,
+        itemId: string,
+        availability: boolean,
+    ) {
         try {
             const [existingItems] = await connection.execute<RowDataPacket[]>(
                 'SELECT * FROM menuitem WHERE itemId = ?',
-                [itemId]
+                [itemId],
             );
             if (existingItems.length === 0) {
                 connection.release();
@@ -81,11 +87,13 @@ class MenuItemManager {
             }
             await connection.execute(
                 'UPDATE menuitem SET availability = ? WHERE itemId = ?',
-                [availability, itemId]
+                [availability, itemId],
             );
             connection.release();
             socket.emit('update_item_response', { success: true });
-            await notificationManager.addNotification('Item availability updated: ' + itemId);
+            await notificationManager.addNotification(
+                'Item availability updated: ' + itemId,
+            );
         } catch (err) {
             socket.emit('update_item_response', {
                 success: false,

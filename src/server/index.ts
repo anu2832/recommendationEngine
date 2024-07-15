@@ -15,7 +15,7 @@ io.on('connection', socket => {
     // Create an instance of AdminEventHandler for each connection
     new AdminEventHandler(socket);
     new AuthEventHandler(socket);
-    new EmployeeEventHandler(socket)
+    new EmployeeEventHandler(socket);
 
     // handleEmployeeEvents(socket);
     new ChefEvents(socket);

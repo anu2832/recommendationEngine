@@ -164,3 +164,137 @@ class ItemOperations {
 const itemOperationsInstance = new ItemOperations();
 export { ItemOperations };
 export default itemOperationsInstance;
+
+// import { question, rl } from '../../../utils/rl';
+// import { socket } from '../../../utils/socket';
+// import AdminOperationsInstance from './AdminOperations';
+// import { ADMIN_CONSTANTS } from './Constant';
+
+// class ItemOperations {
+//     private socket;
+
+//     constructor() {
+//         this.socket = socket;
+//         this.socket.on('add_item_response', this.handleAddItemResponse.bind(this));
+//         this.socket.on('delete_item_response', this.handleDeleteItemResponse.bind(this));
+//         this.socket.on('update_item_response', this.handleUpdateItemResponse.bind(this));
+//     }
+
+//     async updateItem(role: string) {
+//         const id = await question(ADMIN_CONSTANTS.updateItem.id);
+//         this.socket.emit('check_item_exists', { itemId: id });
+
+//         this.socket.once('check_item_exists_response', async response => {
+//             if (response.success && response.exists) {
+//                 const availability = await question(ADMIN_CONSTANTS.updateItem.availability);
+//                 this.socket.emit('update_item', {
+//                     itemId: id,
+//                     availability: availability,
+//                 });
+//             } else {
+//                 console.log('Item ID not found.');
+//                 AdminOperationsInstance.modifyMenu();
+//             }
+//         });
+//     }
+
+//     async addItem(role: string) {
+//         const id = await question(ADMIN_CONSTANTS.addItem.id);
+//         const name = await question(ADMIN_CONSTANTS.addItem.name);
+//         const price = await question(ADMIN_CONSTANTS.addItem.price);
+//         const availability = await question(ADMIN_CONSTANTS.addItem.availability);
+//         const mealTime = await question(ADMIN_CONSTANTS.addItem.mealTime);
+//         const diet_category = await question(ADMIN_CONSTANTS.addItem.dietCategory);
+//         const spice_level = await question(ADMIN_CONSTANTS.addItem.spiceLevel);
+//         const area = await question(ADMIN_CONSTANTS.addItem.area);
+//         const sweetDish = await question(ADMIN_CONSTANTS.addItem.sweetDish);
+
+//         this.socket.emit('add_item', {
+//             id,
+//             name,
+//             price,
+//             availability,
+//             role,
+//             mealTime,
+//             diet_category,
+//             spice_level,
+//             area,
+//             sweetDish,
+//         });
+//     }
+
+//     async deleteItem(role: string) {
+//         const itemId = await question(ADMIN_CONSTANTS.deleteItem.id);
+//         this.socket.emit('delete_item', { itemId, role });
+//     }
+
+//     handleAddItemResponse(data: { success: boolean; message: string }) {
+//         if (data.success) {
+//             console.log(ADMIN_CONSTANTS.successMessages.addItem);
+//             rl.question(ADMIN_CONSTANTS.retryPrompt, (answer: string) => {
+//                 if (answer.toLowerCase() === 'yes') {
+//                     this.addItem('admin');
+//                 } else {
+//                     AdminOperationsInstance.modifyMenu();
+//                 }
+//             });
+//         } else {
+//             console.log(ADMIN_CONSTANTS.failureMessages.addItem + data.message);
+//             rl.question(ADMIN_CONSTANTS.retryPrompt, (answer: string) => {
+//                 if (answer.toLowerCase() === 'yes') {
+//                     this.addItem('admin');
+//                 } else {
+//                     AdminOperationsInstance.modifyMenu();
+//                 }
+//             });
+//         }
+//     }
+
+//     handleDeleteItemResponse(data: { success: boolean; message: string }) {
+//         if (data.success) {
+//             console.log(ADMIN_CONSTANTS.successMessages.deleteItem);
+//             rl.question(ADMIN_CONSTANTS.retryPrompt, (answer: string) => {
+//                 if (answer.toLowerCase() === 'yes') {
+//                     this.deleteItem('admin');
+//                 } else {
+//                     AdminOperationsInstance.modifyMenu();
+//                 }
+//             });
+//         } else {
+//             console.log(ADMIN_CONSTANTS.failureMessages.deleteItem + data.message);
+//             rl.question(ADMIN_CONSTANTS.retryPrompt, (answer: string) => {
+//                 if (answer.toLowerCase() === 'yes') {
+//                     this.deleteItem('admin');
+//                 } else {
+//                     AdminOperationsInstance.modifyMenu();
+//                 }
+//             });
+//         }
+//     }
+
+//     handleUpdateItemResponse(data: { success: boolean; message: string }) {
+//         if (data.success) {
+//             console.log(ADMIN_CONSTANTS.successMessages.updateItem);
+//             rl.question(ADMIN_CONSTANTS.retryPrompt, (answer: string) => {
+//                 if (answer.toLowerCase() === 'yes') {
+//                     this.updateItem('admin');
+//                 } else {
+//                     AdminOperationsInstance.modifyMenu();
+//                 }
+//             });
+//         } else {
+//             console.log(ADMIN_CONSTANTS.failureMessages.updateItem + data.message);
+//             rl.question(ADMIN_CONSTANTS.retryPrompt, (answer: string) => {
+//                 if (answer.toLowerCase() === 'yes') {
+//                     this.updateItem('admin');
+//                 } else {
+//                     AdminOperationsInstance.modifyMenu();
+//                 }
+//             });
+//         }
+//     }
+// }
+
+// const itemOperationsInstance = new ItemOperations();
+// export { ItemOperations };
+// export default itemOperationsInstance;

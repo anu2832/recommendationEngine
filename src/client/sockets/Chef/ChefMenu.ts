@@ -1,6 +1,7 @@
 import { rl } from '../../../utils/rl';
 import { UserAuth } from '../auth/userAuth';
 import { ChefMenuHandlers } from './ChefMenuHandler';
+import { CHEF_MENU_CONSTANTS } from './constant';
 
 export class ChefMenu {
     private handlers: ChefMenuHandlers;
@@ -10,20 +11,12 @@ export class ChefMenu {
     }
 
     public chefMenu() {
-        console.log('Chef operations:');
-        console.log('---------------------------------------');
-        console.log('|  Option  |       Description         |');
-        console.log('---------------------------------------');
-        console.log('|    1     |   View Menu               |');
-        console.log('|    2     |   RollOut Menu            |');
-        console.log('|    3     |   Finalize Menu           |');
-        console.log('|    4     |   List of Discarded items |');
-        console.log('|    5     |   Modify Discard List     |');
-        console.log('|    6     |   See feedback            |');
-        console.log('|    7     |   Logout                  |');
-        console.log('---------------------------------------');
+        console.log(CHEF_MENU_CONSTANTS.title);
+        console.log(CHEF_MENU_CONSTANTS.separator);
+        CHEF_MENU_CONSTANTS.options.forEach(option => console.log(option));
+        console.log(CHEF_MENU_CONSTANTS.separator);
 
-        rl.question('Choose an option: ', option => {
+        rl.question(CHEF_MENU_CONSTANTS.chooseOptionPrompt, option => {
             switch (option) {
                 case '1':
                     this.handlers.viewMenu();
@@ -47,7 +40,7 @@ export class ChefMenu {
                     UserAuth.logOut();
                     break;
                 default:
-                    console.log('Invalid option');
+                    console.log(CHEF_MENU_CONSTANTS.invalidOption);
                     this.chefMenu();
             }
         });

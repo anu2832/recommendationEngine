@@ -14,7 +14,7 @@ import {
     getFinalizedMenu,
     getNotifications,
     insertRecipe,
-    getDiscardedItems
+    getDiscardedItems,
 } from './MenuItemService';
 import { getConnection } from '../../../utils/databaseHandler';
 import { RowDataPacket } from 'mysql2';
@@ -39,15 +39,15 @@ class EmployeeEventHandler {
     }
 
     private setupListeners() {
-        this.socket.on('create_profile', async (data) => {
+        this.socket.on('create_profile', async data => {
             await this.createProfile(data);
         });
 
-        this.socket.on('discardItems_list', async (data) => {
+        this.socket.on('discardItems_list', async data => {
             await this.seeDiscardList(data);
         });
 
-        this.socket.on('view_menu', async (data) => {
+        this.socket.on('view_menu', async data => {
             await this.viewMenu(data);
         });
 
@@ -55,24 +55,23 @@ class EmployeeEventHandler {
             await this.viewFeedbacks();
         });
 
-        this.socket.on('rolloutMenu', async (data) => {
-            console.log('server');
+        this.socket.on('rolloutMenu', async data => {
             await this.viewRolloutMenu(data);
         });
 
-        this.socket.on('vote_for_menu', async (data) => {
+        this.socket.on('vote_for_menu', async data => {
             await this.voteForMenu(data);
         });
 
-        this.socket.on('give_feedBack', async (data) => {
+        this.socket.on('give_feedBack', async data => {
             await this.giveFeedback(data);
         });
 
-        this.socket.on('finalizedMenu', async (data) => {
+        this.socket.on('finalizedMenu', async data => {
             await this.viewFinalizedMenu(data);
         });
 
-        this.socket.on('viewNotification', async (data) => {
+        this.socket.on('viewNotification', async data => {
             await this.viewNotification(data);
         });
 
@@ -83,13 +82,24 @@ class EmployeeEventHandler {
 
     private async createProfile(data: any) {
         const { userId, diet_category, spice_level, area, sweet_level } = data;
+        console.log(data, '---------->');
         try {
             const rows = await getUserProfile(userId);
 
             if (rows.length > 0) {
-                await updateUserProfile(userId, diet_category, spice_level, area, sweet_level);
+                this.socket.emit('create_profile_response', {
+                    success: true,
+                    message: 'Your profile has been created',
+                    result: data,
+                });
             } else {
-                await insertUserProfile(userId, diet_category, spice_level, area, sweet_level);
+                await insertUserProfile(
+                    userId,
+                    diet_category,
+                    spice_level,
+                    area,
+                    sweet_level,
+                );
             }
 
             this.socket.emit('create_profile_response', {
@@ -107,6 +117,7 @@ class EmployeeEventHandler {
     }
 
     private async viewMenu(data: any) {
+        console.log('hiiiiiiiii');
         const { userId } = data;
         try {
             const results = await getMenuItems();
@@ -148,7 +159,6 @@ class EmployeeEventHandler {
         console.log(userId);
         try {
             const userProfileResults = await getUserProfile(userId);
-            console.log(userProfileResults);
 
             if (userProfileResults.length === 0) {
                 this.socket.emit('rollout_response', {
@@ -161,11 +171,10 @@ class EmployeeEventHandler {
             const userProfile = userProfileResults[0];
 
             const rolloutResults = await getRolloutItems();
-            console.log(rolloutResults, '------------');
 
             const sortedRolloutItems = this.sortRolloutItems(
                 rolloutResults,
-                userProfile
+                userProfile,
             );
 
             this.socket.emit('rollout_response', {
@@ -237,7 +246,7 @@ class EmployeeEventHandler {
                 menuItem.itemName,
                 message,
                 rating,
-                mealType
+                mealType,
             );
 
             this.socket.emit('giveFeedback_response', {
@@ -277,45 +286,45 @@ class EmployeeEventHandler {
 
     async viewNotification(data: any) {
         const { userId } = data;
-        console.log(data,"<-----------")
-    try {
-        const lastNotificationId = await this.getLastNotificationId(userId);
-        const notifications = await getNotifications(
-            lastNotificationId ?? 0,
-        );
+        console.log(data, '<-----------');
+        try {
+            const lastNotificationId = await this.getLastNotificationId(userId);
+            const notifications = await getNotifications(
+                lastNotificationId ?? 0,
+            );
 
-        const connection = await pool.getConnection();
-        if (notifications.length > 0) {
-            const latestNotificationId = notifications[0].notificationId;
-            await this.updateLastNotificationId(userId, latestNotificationId);
+            const connection = await pool.getConnection();
+            if (notifications.length > 0) {
+                const latestNotificationId = notifications[0].notificationId;
+                await this.updateLastNotificationId(
+                    userId,
+                    latestNotificationId,
+                );
+            }
+            connection.release();
+
+            this.socket.emit('viewNotification_response', {
+                success: true,
+                userId: data.userId,
+                notifications: notifications,
+            });
+        } catch (err) {
+            this.socket.emit('viewNotification_response', {
+                success: false,
+                message: 'Database error',
+            });
+            console.error('Database query error', err);
         }
-        connection.release();
-
-        this.socket.emit('viewNotification_response', {
-            success: true,
-            userId: data.userId,
-            notifications: notifications,
-        });
-    } catch (err) {
-        this.socket.emit('viewNotification_response', {
-            success: false,
-            message: 'Database error',
-        });
-        console.error('Database query error', err);
-    }
     }
 
-    async updateLastNotificationId(
-        userId: number,
-        notificationId: number,
-    ) {
+    async updateLastNotificationId(userId: number, notificationId: number) {
         const connection = await pool.getConnection();
         try {
             const [rows] = await connection.execute<RowDataPacket[]>(
                 'SELECT * FROM userNotificationHistory WHERE userId = ?',
                 [userId],
             );
-    
+
             if (rows.length > 0) {
                 await connection.execute(
                     'UPDATE userNotificationHistory SET notificationId = ? WHERE userId = ?',
@@ -373,7 +382,7 @@ class EmployeeEventHandler {
 
     private async giveOwnRecipe(data: any) {
         const { id, dislikeReason, tasteExpectations, message } = data;
-        try{
+        try {
             const [discardResults] = await this.connection.execute(
                 `SELECT d.*, m.itemName AS itemName, m.mealType
                 FROM discardItemList d
@@ -401,13 +410,13 @@ class EmployeeEventHandler {
                     'Message, feedback, and rating stored in feedback table successfully',
                 discardList: discardResults,
             });
-    } catch (err) {
-        this.socket.emit('give_discard_response', {
-            success: false,
-            message: 'Database error',
-        });
-        console.error('Database query error', err);
-    }
+        } catch (err) {
+            this.socket.emit('give_discard_response', {
+                success: false,
+                message: 'Database error',
+            });
+            console.error('Database query error', err);
+        }
     }
 
     private async seeDiscardList(data: any) {

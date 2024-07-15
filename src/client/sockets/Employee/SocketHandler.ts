@@ -91,7 +91,7 @@ export class EmployeeMenuHandlers {
     }
 
     public async ownRecipe(userId: string) {
-        console.log('hii ')
+        console.log('hii ');
         socket.emit('discardItems_list', { userId });
     }
 
@@ -197,7 +197,7 @@ export class EmployeeMenuHandlers {
         } else {
             console.error('Rollout data retrieval failed:', data.message);
         }
-        this.parent.employeeMenu(data.userId);
+        // this.parent.employeeMenu(data.userId);
     }
 
     private handleGiveFeedbackResponse(data: any) {
@@ -246,7 +246,7 @@ export class EmployeeMenuHandlers {
 
     private handleCreateProfileResponse(data: any) {
         if (data.success) {
-            console.log('Your profile is created');
+            console.log(data.message);
         } else {
             console.error(data.message);
         }

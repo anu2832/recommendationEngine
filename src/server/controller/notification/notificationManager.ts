@@ -4,6 +4,7 @@ import { PoolConnection } from 'mysql2/promise';
 class NotificationManager {
     // Adding a notification to the database
     async addNotification(message: string) {
+        console.log(message);
         let connection: PoolConnection | null = null;
         try {
             const expiryTime = new Date();

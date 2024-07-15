@@ -14,9 +14,34 @@ export class AdminEventHandler {
     private initializeEvents() {
         getConnection()
             .then(connection => {
-                this.socket.on('add_item', async (data: MenuItem) => await this.menuItemManager.addItem(this.socket, connection, data));
-                this.socket.on('delete_item', async (data: any) => await this.menuItemManager.deleteItem(this.socket, connection, data));
-                this.socket.on('update_item', async ({ itemId, availability }) => await this.menuItemManager.updateItem(this.socket, connection, itemId, availability));
+                this.socket.on(
+                    'add_item',
+                    async (data: MenuItem) =>
+                        await this.menuItemManager.addItem(
+                            this.socket,
+                            connection,
+                            data,
+                        ),
+                );
+                this.socket.on(
+                    'delete_item',
+                    async (data: any) =>
+                        await this.menuItemManager.deleteItem(
+                            this.socket,
+                            connection,
+                            data,
+                        ),
+                );
+                this.socket.on(
+                    'update_item',
+                    async ({ itemId, availability }) =>
+                        await this.menuItemManager.updateItem(
+                            this.socket,
+                            connection,
+                            itemId,
+                            availability,
+                        ),
+                );
             })
             .catch(err => {
                 console.error('Error getting connection from pool:', err);

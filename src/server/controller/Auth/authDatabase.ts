@@ -7,7 +7,10 @@ export class AuthDatabase {
         this.connection = connection;
     }
 
-    async authenticateUser(employeeId: string, name: string): Promise<any | null> {
+    async authenticateUser(
+        employeeId: string,
+        name: string,
+    ): Promise<any | null> {
         const [results] = await this.connection.execute<RowDataPacket[]>(
             'SELECT * FROM user WHERE password = ? AND userName = ?',
             [employeeId, name],
@@ -15,7 +18,11 @@ export class AuthDatabase {
         return results.length > 0 ? results[0] : null;
     }
 
-    async registerUser(employeeId: string, name: string, role: string): Promise<void> {
+    async registerUser(
+        employeeId: string,
+        name: string,
+        role: string,
+    ): Promise<void> {
         await this.connection.execute(
             'INSERT INTO user (username, password, role) VALUES (?, ?, ?)',
             [name, employeeId, role],

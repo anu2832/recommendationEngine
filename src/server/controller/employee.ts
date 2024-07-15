@@ -99,13 +99,13 @@
 //         const [results] = await connection.execute('SELECT * FROM menuitem');
 //         connection.release();
 
-//         socket.emit('view_menu_response', {
+//         socket.emit('', {
 //             success: true,
 //             menu: results,
 //             userId: userId,
 //         });
 //     } catch (err) {
-//         socket.emit('view_menu_response', {
+//         socket.emit('', {
 //             success: false,
 //             message: 'Database error',
 //         });
